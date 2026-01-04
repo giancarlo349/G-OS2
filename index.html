@@ -4,15 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOVA REAL - Terminal de Gerenciamento</title>
+    <title>NOVA REAL - Terminal v3.5</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #ff0000;
-            --primary-dim: #600000;
-            --primary-dark: #2a0000;
-            --primary-bg: #0a0000;
-            --glow: 0 0 15px rgba(255, 0, 0, 0.7);
+            --primary-dim: #800000;
+            --primary-dark: #300000;
+            --primary-bg: #020000;
+            --glow: 0 0 15px rgba(255, 0, 0, 0.6);
             --font-mono: 'JetBrains Mono', monospace;
             --font-terminal: 'VT323', monospace;
         }
@@ -26,7 +26,7 @@
         }
 
         body {
-            background-color: #050000;
+            background-color: var(--primary-bg);
             color: var(--primary);
             font-family: var(--font-mono);
             overflow: hidden;
@@ -34,193 +34,205 @@
             width: 100vw;
         }
 
-        #app {
-            height: 100%;
-            width: 100%;
-            overflow-y: auto;
-            position: relative;
-            z-index: 10;
-        }
-
-        /* Efeitos Visuais de Fundo (Hacker Aesthetic) */
+        /* Efeitos Hacker de Fundo */
         .bg-stripes {
             position: fixed;
-            top: 0; right: 0; width: 60%; height: 100%;
-            background: repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(255, 0, 0, 0.03) 60px, rgba(255, 0, 0, 0.03) 120px);
+            top: 0; right: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(-45deg, transparent, transparent 50px, rgba(255, 0, 0, 0.02) 50px, rgba(255, 0, 0, 0.02) 100px);
             pointer-events: none; z-index: 1;
         }
 
-        body::before {
-            content: "";
+        .grid-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url("https://www.transparenttextures.com/patterns/pinstriped-suit.png");
-            opacity: 0.1; pointer-events: none; z-index: 5;
+            background-image: linear-gradient(rgba(255, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 0, 0, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none; z-index: 1;
         }
 
-        .grid-background {
-            position: fixed;
-            top: -50%; left: -50%; width: 200%; height: 200%;
-            background-image: linear-gradient(rgba(255, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 0, 0, 0.05) 1px, transparent 1px);
-            background-size: 80px 80px;
-            transform: perspective(1000px) rotateX(60deg);
-            animation: move-grid 60s linear infinite;
-            z-index: 1; pointer-events: none;
-        }
-
-        @keyframes move-grid {
-            0% { transform: perspective(1000px) rotateX(60deg) translateY(0); }
-            100% { transform: perspective(1000px) rotateX(60deg) translateY(80px); }
-        }
-
-        .side-deco {
-            position: fixed; top: 0; bottom: 0; width: 2px;
-            background: linear-gradient(to bottom, transparent, var(--primary), transparent);
-            animation: side-move 3s ease-in-out infinite;
-            z-index: 2; opacity: 0.4;
-        }
-        .side-left { left: 15px; }
-        .side-right { right: 15px; }
-
-        @keyframes side-move {
-            0%, 100% { transform: scaleY(0.4); opacity: 0.2; }
-            50% { transform: scaleY(1); opacity: 0.6; }
-        }
-
-        .scanlines {
+        .scanline {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
-            background-size: 100% 4px; z-index: 1001; pointer-events: none; opacity: 0.15;
+            background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
+            background-size: 100% 4px;
+            pointer-events: none; z-index: 1001; opacity: 0.3;
         }
 
-        .crt-overlay {
+        .crt-vignette {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, transparent 50%, rgba(0, 0, 0, 0.7) 100%);
+            background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.8) 100%);
             pointer-events: none; z-index: 1000;
         }
 
-        .glitch-text {
-            position: relative; text-shadow: var(--glow);
-            animation: glitch 8s infinite; text-transform: uppercase;
-            font-weight: bold; letter-spacing: 3px;
+        #app {
+            height: 100%; width: 100%;
+            display: flex; flex-direction: column;
+            position: relative; z-index: 10;
         }
 
-        @keyframes glitch {
-            0%, 90%, 100% { transform: none; text-shadow: var(--glow); }
-            92% { transform: skew(10deg); text-shadow: 3px 0 red, -3px 0 #300; }
-            94% { transform: skew(-10deg); text-shadow: -3px 0 red, 3px 0 #300; }
+        /* Barra Superior do Sistema */
+        .top-bar {
+            height: 35px;
+            background: #000;
+            border-bottom: 1px solid var(--primary-dim);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; font-size: 0.7rem; letter-spacing: 1px;
+            color: var(--primary-dim);
         }
 
-        /* Interface de Login */
-        .container {
-            max-width: 1400px; margin: 0 auto;
-            padding: 5rem 2rem; position: relative; z-index: 20;
+        /* Containers de View */
+        .view-container {
+            flex: 1; display: flex; justify-content: center; align-items: center;
+            overflow-y: auto; padding: 20px;
         }
 
-        #login-view, #dashboard-view { display: none; }
+        #login-view, #dashboard-view { width: 100%; }
+        #login-view { 
+            height: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            padding-bottom: 5vh; /* Tira o peso excessivo do topo */
+        }
+        #dashboard-view { display: none; }
 
-        .auth-box {
-            width: 90%; max-width: 480px;
-            background: rgba(8, 0, 0, 0.95); border: 1px solid var(--primary);
-            padding: 4rem; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); box-shadow: 0 0 50px rgba(255, 0, 0, 0.3);
-            z-index: 100;
-            backdrop-filter: blur(10px);
+        /* Box de Login - Centralizada e Estilizada */
+        .login-box {
+            width: 100%; max-width: 420px;
+            border: 1px solid var(--primary);
+            background: rgba(10, 0, 0, 0.95);
+            padding: 50px 40px;
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.25);
+            position: relative;
+            margin-top: 60px; /* Desce a box conforme solicitado */
         }
 
-        .auth-box::before {
-            content: ""; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px;
-            border: 1px solid rgba(255, 0, 0, 0.2); pointer-events: none;
+        .login-box::before {
+            content: "[ PROTOCOLO DE ACESSO ]";
+            position: absolute; top: -12px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-bg); padding: 0 15px; font-size: 0.65rem; color: var(--primary);
+            letter-spacing: 2px;
         }
 
+        /* Elementos de Formulário */
+        .field { margin-bottom: 25px; }
+        .field label { display: block; font-size: 0.65rem; color: var(--primary-dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
         input, textarea {
-            width: 100%; background: #000; border: 1px solid var(--primary-dim);
-            color: var(--primary); padding: 16px; font-family: var(--font-mono);
-            outline: none; transition: 0.3s; font-size: 0.9rem; margin-top: 8px;
+            width: 100%; background: #000; border: 1px solid var(--primary-dark);
+            color: var(--primary); padding: 14px; font-family: var(--font-mono);
+            font-size: 0.9rem; outline: none; transition: 0.2s;
         }
-
-        input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 15px rgba(255, 0, 0, 0.5); }
-
-        .input-group { margin-bottom: 2rem; }
-        .input-group label { font-size: 0.65rem; text-transform: uppercase; color: var(--primary-dim); letter-spacing: 1px; }
+        input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 12px rgba(255,0,0,0.3); }
 
         .btn {
-            display: inline-block; padding: 16px 32px; background: rgba(128, 0, 0, 0.1);
-            color: var(--primary); border: 1px solid var(--primary); cursor: pointer;
-            font-weight: bold; text-transform: uppercase; font-family: var(--font-mono);
-            width: 100%; transition: 0.3s; letter-spacing: 3px; font-size: 0.9rem;
+            background: rgba(255, 0, 0, 0.1); border: 1px solid var(--primary);
+            color: var(--primary); padding: 14px 24px; cursor: pointer;
+            font-family: var(--font-mono); text-transform: uppercase; font-weight: bold;
+            letter-spacing: 2px; transition: 0.3s; width: 100%;
         }
-
         .btn:hover { background: var(--primary); color: #000; box-shadow: var(--glow); }
-        .btn-small { padding: 10px 20px; font-size: 0.75rem; width: auto; }
-        .btn-danger { color: #f00; border-color: #800; background: rgba(255, 0, 0, 0.05); }
+        .btn-sm { padding: 8px 16px; font-size: 0.75rem; width: auto; }
+        .btn-danger { color: #f44; border-color: #600; background: rgba(100, 0, 0, 0.1); }
         .btn-danger:hover { background: #800; color: #fff; }
 
-        /* Dashboard */
-        .dashboard-header {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            border-bottom: 2px solid var(--primary-dim); padding-bottom: 2rem; margin-bottom: 3rem;
+        /* Dashboard UI */
+        .dash-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 40px; border-bottom: 2px double var(--primary-dim);
+            padding-bottom: 25px;
         }
 
-        .search-bar { width: 100%; margin-bottom: 3rem; position: relative; }
-        #search-input { border-left: 5px solid var(--primary); background: rgba(20, 0, 0, 0.5); }
+        .sys-panels-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .sys-panel {
+            border: 1px solid var(--primary-dark); padding: 15px; font-size: 0.65rem;
+            background: rgba(255, 0, 0, 0.02); line-height: 1.6;
+        }
 
         .notes-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 40px; padding-bottom: 200px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 30px; padding-bottom: 120px;
         }
 
-        .note-card {
-            background: rgba(10, 0, 0, 0.9); border: 1px solid var(--primary-dim);
-            padding: 30px; position: relative; cursor: pointer;
-            clip-path: polygon(5% 0, 100% 0, 100% 95%, 95% 100%, 0 100%, 0 5%);
-            transition: 0.4s;
+        /* Terminal Style Cards */
+        .terminal-card {
+            border: 1px solid var(--primary-dim); background: rgba(5, 0, 0, 0.9);
+            display: flex; flex-direction: column; transition: 0.4s;
+            cursor: pointer; position: relative;
+            clip-path: polygon(0 0, 100% 0, 100% 90%, 95% 100%, 0 100%);
         }
 
-        .note-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 10px 30px rgba(255, 0, 0, 0.2); }
+        .terminal-card:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 5px 25px rgba(255, 0, 0, 0.15); }
 
-        .note-card h3 { color: var(--primary); margin-bottom: 15px; font-size: 1.2rem; text-transform: uppercase; border-bottom: 1px solid var(--primary-dark); padding-bottom: 10px; }
-        .note-card p { font-size: 0.9rem; line-height: 1.7; height: 110px; overflow: hidden; color: rgba(255, 80, 80, 0.9); mask-image: linear-gradient(to bottom, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%); }
+        .terminal-header {
+            height: 28px; background: var(--primary-dark);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 15px; font-size: 0.6rem; border-bottom: 1px solid var(--primary-dim);
+            letter-spacing: 1px;
+        }
 
-        .card-footer { display: flex; justify-content: space-between; margin-top: 25px; font-size: 0.7rem; color: var(--primary-dim); text-transform: uppercase; }
+        .terminal-body { padding: 25px; flex: 1; }
+        .terminal-body h3 { font-size: 1.1rem; margin-bottom: 12px; color: var(--primary); text-transform: uppercase; border-left: 3px solid var(--primary); padding-left: 10px; }
+        .terminal-body p { font-size: 0.9rem; color: #b00; line-height: 1.6; height: 70px; overflow: hidden; opacity: 0.8; }
+
+        .terminal-footer {
+            padding: 10px 20px; font-size: 0.65rem; border-top: 1px solid var(--primary-dark);
+            color: var(--primary-dim); display: flex; justify-content: space-between;
+        }
 
         /* Modais */
-        .modal-backdrop {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.95); display: none; justify-content: center;
-            align-items: center; z-index: 9999; backdrop-filter: blur(8px);
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95); z-index: 10000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(10px); padding: 20px;
         }
 
-        .modal-content {
-            background: #050000; border: 1px solid var(--primary); padding: 50px;
-            width: 90%; max-width: 750px; box-shadow: 0 0 100px rgba(255, 0, 0, 0.5);
-            position: relative;
+        .modal {
+            background: #020000; border: 1px solid var(--primary);
+            max-width: 850px; width: 100%; position: relative;
+            box-shadow: 0 0 60px rgba(255, 0, 0, 0.4);
+            animation: modal-entry 0.3s ease-out;
         }
 
-        .modal-view-content { max-width: 1000px; height: 90vh; display: flex; flex-direction: column; border-width: 2px; }
+        @keyframes modal-entry { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
-        /* Barras de Progresso Decorativas */
-        .progress-bar-container { width: 100%; height: 3px; background: var(--primary-dark); margin: 15px 0; overflow: hidden; position: relative; }
-        .progress-bar-fill { height: 100%; background: var(--primary); width: 40%; animation: loading-bar 4s ease-in-out infinite; }
-
-        @keyframes loading-bar {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(300%); }
+        .modal-header {
+            padding: 15px 30px; background: var(--primary-dark);
+            border-bottom: 1px solid var(--primary); display: flex;
+            justify-content: space-between; align-items: center;
+            font-size: 0.8rem; font-weight: bold; letter-spacing: 2px;
         }
 
-        .system-logs {
-            position: fixed; bottom: 25px; right: 25px; font-size: 0.7rem;
-            color: var(--primary-dim); text-align: right; z-index: 100;
-            background: rgba(0,0,0,0.8); padding: 15px; border-right: 3px solid var(--primary);
-            pointer-events: none;
+        .modal-body { padding: 40px; max-height: 85vh; overflow-y: auto; }
+
+        /* Estilo para View do Conteúdo */
+        .view-content-area {
+            font-family: var(--font-mono); font-size: 1.1rem; line-height: 1.8;
+            color: #ff3333; white-space: pre-wrap; margin-bottom: 40px;
+            padding: 30px; background: rgba(255, 0, 0, 0.03);
+            border-left: 5px solid var(--primary);
         }
 
-        .status-header {
-            position: fixed; top: 0; left: 0; width: 100%; height: 40px;
-            background: #0a0000; border-bottom: 1px solid var(--primary-dim);
-            z-index: 1000; display: flex; align-items: center; padding: 0 30px;
-            font-size: 0.7rem; justify-content: space-between; text-transform: uppercase; letter-spacing: 3px;
+        /* Efeitos Visuais */
+        .glitch { animation: glitch-anim 6s infinite; }
+        @keyframes glitch-anim {
+            0%, 90% { transform: none; opacity: 1; }
+            92% { transform: translate(3px, -2px); opacity: 0.8; text-shadow: 2px 0 blue; }
+            94% { transform: translate(-3px, 2px); opacity: 0.9; text-shadow: -2px 0 green; }
+            96% { transform: translate(1px, -1px); }
         }
+
+        .loading-bar { width: 100%; height: 3px; background: var(--primary-dark); position: relative; overflow: hidden; }
+        .loading-bar::after {
+            content: ""; position: absolute; left: 0; height: 100%; width: 40%;
+            background: var(--primary); animation: loading-sweep 2.5s infinite linear;
+        }
+        @keyframes loading-sweep { 0% { left: -40%; } 100% { left: 100%; } }
 
         .loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -228,134 +240,169 @@
             background: #000; color: var(--primary); z-index: 2000;
         }
 
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: var(--primary-dim); }
+        #logs {
+            position: fixed; bottom: 25px; left: 25px; font-size: 0.65rem;
+            color: var(--primary-dim); z-index: 100; max-width: 350px;
+            pointer-events: none; background: rgba(0,0,0,0.5); padding: 10px;
+        }
+
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; background: var(--primary); box-shadow: 0 0 8px var(--primary); }
     </style>
 </head>
 <body>
     <div id="loading-screen" class="loading-screen">
-        <div class="glitch-text">GIANCARLO_OS_v3.0_CARREGANDO...</div>
+        <div class="glitch" style="font-size: 1.2rem; letter-spacing: 2px;">GIANCARLO_OS // INICIALIZANDO_TERMINAL...</div>
     </div>
 
     <div class="bg-stripes"></div>
-    <div class="status-header">
-        <div>TERMINAL_NOVA_REAL // PROTOCOLO_SEGURO</div>
-        <div id="clock">00:00:00</div>
-        <div>OPERADOR: GIANCARLO</div>
-    </div>
-    <div class="side-deco side-left"></div>
-    <div class="side-deco side-right"></div>
-    <div class="crt-overlay"></div>
-    <div class="scanlines"></div>
-    <div class="grid-background"></div>
+    <div class="grid-bg"></div>
+    <div class="scanline"></div>
+    <div class="crt-vignette"></div>
 
     <div id="app">
-        <!-- LOGIN -->
-        <div id="login-view" class="container">
-            <div class="auth-box">
-                <div class="progress-bar-container"><div class="progress-bar-fill"></div></div>
-                <h1 class="glitch-text" style="text-align: center; margin-bottom: 1rem; font-size: 2.8rem;">NOVA REAL</h1>
-                <p style="font-size: 0.7rem; text-align: center; margin-bottom: 1rem; color: #ff0000; letter-spacing: 4px;">SISTEMA DE GERENCIAMENTO</p>
-                <p style="font-size: 0.6rem; text-align: center; margin-bottom: 2.5rem; opacity: 0.6; letter-spacing: 2px;">PROTOCOLOS • MÉTODOS • LINKS • CLIENTES</p>
-                
-                <form id="login-form">
-                    <div class="input-group">
-                        <label>VIRTUAL_ID</label>
-                        <input type="email" id="login-email" value="deemo@gmail.com" required>
+        <!-- Barra de Status Superior -->
+        <div class="top-bar">
+            <div>TERMINAL_NOVA_REAL // SYSTEM_OS_v3.5</div>
+            <div id="top-stats">IP_UPLINK: 192.168.1.104 | CORE_LOAD: 15% | RAM: 2.4GB</div>
+            <div id="clock">00:00:00</div>
+        </div>
+
+        <div id="view-port" class="view-container">
+            <!-- LOGIN VIEW -->
+            <div id="login-view">
+                <div class="login-box">
+                    <div class="loading-bar" style="margin-bottom: 40px;"></div>
+                    <h1 class="glitch" style="font-size: 2.5rem; margin-bottom: 8px; text-align: center; letter-spacing: 5px;">NOVA REAL</h1>
+                    <p style="font-size: 0.65rem; text-align: center; color: var(--primary-dim); letter-spacing: 6px; margin-bottom: 40px; text-transform: uppercase;">Acesso Criptografado</p>
+                    
+                    <form id="login-form">
+                        <div class="field">
+                            <label>OPERATOR_ID</label>
+                            <input type="email" id="login-email" value="deemo@gmail.com" required>
+                        </div>
+                        <div class="field">
+                            <label>ENCRYPTION_KEY</label>
+                            <input type="password" id="login-password" required placeholder="DIGITE SUA CHAVE">
+                        </div>
+                        <div id="login-error" style="display: none; color: #f00; font-size: 0.75rem; margin-bottom: 25px; text-align: center; border: 1px solid #600; padding: 10px; background: rgba(50,0,0,0.4);">[!] ACESSO NEGADO: CHAVE INVÁLIDA</div>
+                        <button type="submit" class="btn">DESBLOQUEAR TERMINAL</button>
+                    </form>
+                    <div style="margin-top: 30px; text-align: center; font-size: 0.55rem; color: #400; letter-spacing: 2px;">GIANCARLO_SYSTEM_STATION // ESTADO: MONITORADO</div>
+                </div>
+            </div>
+
+            <!-- DASHBOARD VIEW -->
+            <div id="dashboard-view" style="max-width: 1400px; margin: 0 auto; width: 100%;">
+                <header class="dash-header">
+                    <div>
+                        <h1 class="glitch" style="font-size: 2.5rem; letter-spacing: 2px;">DASHBOARD_CENTRAL</h1>
+                        <p id="user-display" style="font-size: 0.7rem; color: var(--primary-dim); margin-top: 8px; font-weight: bold;"></p>
                     </div>
-                    <div class="input-group">
-                        <label>ACCESS_KEY</label>
-                        <input type="password" id="login-password" required placeholder="********">
+                    <div style="display: flex; gap: 15px;">
+                        <button id="btn-add" class="btn btn-sm">NOVO_REGISTRO</button>
+                        <button id="btn-logout" class="btn btn-sm btn-danger">LOGOUT</button>
                     </div>
-                    <div id="login-error" style="color: #f00; font-size: 0.8rem; margin-bottom: 2rem; display: none; padding: 12px; border: 1px solid #f00; background: rgba(60,0,0,0.6);"></div>
-                    <button type="submit" class="btn" id="login-submit">DECRYPT_ACCESS</button>
+                </header>
+
+                <div class="sys-panels-grid">
+                    <div class="sys-panel">
+                        <span style="color: var(--primary)">DADOS_BANCO:</span> RTDB_CONNECTED<br>
+                        <span style="color: var(--primary)">ENCRIPT:</span> AES-256-GCM<br>
+                        <span style="color: var(--primary)">CONEXÃO:</span> ESTÁVEL
+                    </div>
+                    <div class="sys-panel">
+                        <span style="color: var(--primary)">TRAFÉGO_REDE:</span> [||||||||||..........] 45%<br>
+                        <span style="color: var(--primary)">LATÊNCIA:</span> 12ms<br>
+                        <span style="color: var(--primary)">STATUS:</span> MONITORADO
+                    </div>
+                    <div class="sys-panel">
+                        <span style="color: var(--primary)">ÚLTIMO_SYNC:</span> <span id="sync-time">AGORA</span><br>
+                        <span style="color: var(--primary)">LOCAL:</span> LAT -23.55 | LONG -46.63<br>
+                        <span style="color: var(--primary)">VERSÃO:</span> v3.5.0-ALPHA
+                    </div>
+                </div>
+
+                <div class="field" style="margin-bottom: 40px;">
+                    <input type="text" id="search-input" placeholder="FILTRAR REGISTROS DO BANCO DE DADOS...">
+                </div>
+
+                <div id="notes-grid" class="notes-grid">
+                    <!-- Cards dinâmicos -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EDIÇÃO/CRIAÇÃO -->
+    <div id="edit-modal" class="overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="edit-modal-title">EDITOR_DE_REGISTRO</span>
+                <span style="cursor: pointer;" onclick="closeModal('edit-modal')">[ FECHAR X ]</span>
+            </div>
+            <div class="modal-body">
+                <form id="note-form">
+                    <input type="hidden" id="note-id">
+                    <div class="field">
+                        <label>TÍTULO_DO_REGISTRO</label>
+                        <input type="text" id="note-title" required placeholder="NOME DO CLIENTE / PROJETO">
+                    </div>
+                    <div class="field">
+                        <label>TAG_DO_OPERADOR</label>
+                        <input type="text" id="note-author" value="Giancarlo" required>
+                    </div>
+                    <div class="field">
+                        <label>DADOS_CRIPTOGRAFADOS (PROTOCOLOS/LINKS)</label>
+                        <textarea id="note-content" style="height: 250px;" required placeholder="Insira aqui protocolos, links, senhas e informações relevantes..."></textarea>
+                    </div>
+                    <div style="display: flex; gap: 20px;">
+                        <button type="button" class="btn btn-danger" onclick="closeModal('edit-modal')">DESCARTAR</button>
+                        <button type="submit" class="btn">EFETIVAR_MODIFICAÇÃO</button>
+                    </div>
                 </form>
-                <div style="margin-top: 3rem; font-size: 0.65rem; color: #800; border-top: 1px solid #300; padding-top: 20px; text-align: center; letter-spacing: 2px;">GIANCARLO_DEVELOPMENT_SYSTEMS</div>
-            </div>
-        </div>
-
-        <!-- DASHBOARD -->
-        <div id="dashboard-view" class="container">
-            <header class="dashboard-header">
-                <div>
-                    <h1 class="glitch-text" style="font-size: 2.6rem;">NOVA REAL - CENTRAL</h1>
-                    <p id="user-info" style="font-size: 0.75rem; opacity: 0.7; letter-spacing: 2px; margin-top: 5px;"></p>
-                </div>
-                <div style="display: flex; gap: 20px;">
-                    <button id="btn-new-note" class="btn btn-small">REGISTRAR_MÉTODO</button>
-                    <button id="btn-logout" class="btn btn-small btn-danger">LOGOUT</button>
-                </div>
-            </header>
-
-            <div class="search-bar">
-                <input type="text" id="search-input" placeholder="BUSCAR_CLIENTE_OU_PROTOCOLO_ATIVO...">
-                <div class="progress-bar-container" style="margin-top: 15px;">
-                    <div class="progress-bar-fill"></div>
-                </div>
-            </div>
-
-            <div id="notes-grid" class="notes-grid">
-                <!-- Dinâmico -->
             </div>
         </div>
     </div>
 
-    <!-- MODAL CRIAR/EDITAR -->
-    <div id="note-modal" class="modal-backdrop">
-        <div class="modal-content">
-            <div class="progress-bar-container" style="position: absolute; top: 0; left: 0;"><div class="progress-bar-fill"></div></div>
-            <h2 id="modal-title" class="glitch-text" style="margin-bottom: 3rem; text-align: center; font-size: 2rem;">REGISTRO_DADOS</h2>
-            <form id="note-form">
-                <input type="hidden" id="note-id">
-                <div class="input-group">
-                    <label>IDENTIFICAÇÃO_DO_CLIENTE</label>
-                    <input type="text" id="note-title" required placeholder="NOME DO CLIENTE / PROJETO">
+    <!-- MODAL: VISUALIZAÇÃO -->
+    <div id="view-modal" class="overlay">
+        <div class="modal" style="max-width: 950px;">
+            <div class="modal-header">
+                <span id="view-header-tag">DADOS_DECRIPTADOS_CENTRAL</span>
+                <span style="cursor: pointer;" onclick="closeModal('view-modal')">[ FECHAR X ]</span>
+            </div>
+            <div class="modal-body">
+                <h2 id="view-title" class="glitch" style="margin-bottom: 15px; font-size: 2.5rem; text-transform: uppercase;"></h2>
+                <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--primary-dim); margin-bottom: 35px; border-bottom: 1px solid var(--primary-dark); padding-bottom: 15px; letter-spacing: 1px;">
+                    <span id="view-author"></span>
+                    <span id="view-date"></span>
                 </div>
-                <div class="input-group">
-                    <label>TÉCNICO_RESPONSÁVEL</label>
-                    <input type="text" id="note-author" value="Giancarlo" required>
+                <div id="view-content" class="view-content-area"></div>
+                <div style="display: flex; gap: 20px; justify-content: flex-end;">
+                    <button id="btn-view-delete" class="btn btn-sm btn-danger" style="min-width: 150px;">RASGAR_DADOS</button>
+                    <button id="btn-view-edit" class="btn btn-sm" style="min-width: 150px;">MODIFICAR</button>
                 </div>
-                <div class="input-group">
-                    <label>DETALHAMENTO_DE_MÉTODOS_E_LINKS</label>
-                    <textarea id="note-content" style="height: 220px; resize: none;" required placeholder="Protocolos, links de acesso, credenciais temporárias..."></textarea>
-                </div>
-                <div style="display: flex; gap: 20px; margin-top: 2rem;">
-                    <button type="button" id="btn-cancel-modal" class="btn" style="background: rgba(255,0,0,0.05); border-color: #500;">CANCELAR</button>
-                    <button type="submit" class="btn">SALVAR_NA_CENTRAL</button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 
-    <!-- MODAL VISUALIZAR (EXPANDIDO) -->
-    <div id="view-modal" class="modal-backdrop">
-        <div class="modal-content modal-view-content">
-            <div class="progress-bar-container" style="position: absolute; top: 0; left: 0;"><div class="progress-bar-fill"></div></div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
-                <div style="flex: 1;">
-                    <span id="view-id" style="font-size: 0.65rem; color: #ff0000; letter-spacing: 3px; display: block; margin-bottom: 8px; opacity: 0.6;">DADOS_CRIPTOGRAFADOS_CID_XXXX</span>
-                    <h2 id="view-title" class="glitch-text" style="font-size: 2.8rem; color: #ff0000; line-height: 1;"></h2>
-                </div>
-                <button id="btn-close-view" class="btn btn-small" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">X</button>
+    <!-- MODAL: CONFIRMAÇÃO DE EXCLUSÃO -->
+    <div id="delete-modal" class="overlay">
+        <div class="modal" style="max-width: 450px; border-color: #f00;">
+            <div class="modal-header" style="background: #400;">
+                <span>AVISO_DE_DESTRUIÇÃO</span>
             </div>
-            <div id="view-content" style="flex: 1; overflow-y: auto; background: rgba(40,0,0,0.1); border: 1px solid rgba(255,0,0,0.2); padding: 40px; font-family: 'JetBrains Mono'; color: #ff5555; white-space: pre-wrap; font-size: 1.1rem; line-height: 1.8; margin-bottom: 2rem; border-left: 4px solid var(--primary);"></div>
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #600; padding-top: 1.5rem;">
-                <div style="font-size: 0.8rem; color: #800; letter-spacing: 1px;">
-                    <div id="view-author" style="margin-bottom: 5px;"></div>
-                    <div id="view-date"></div>
-                </div>
+            <div class="modal-body" style="text-align: center;">
+                <p style="margin-bottom: 35px; font-size: 1rem; line-height: 1.6;">ESTE PROTOCOLO SERÁ PERMANENTEMENTE REMOVIDO DO BANCO CENTRAL. <br><br>DESEJA PROSSEGUIR COM A EXCLUSÃO?</p>
                 <div style="display: flex; gap: 15px;">
-                    <button id="btn-delete-view" class="btn btn-small btn-danger" style="min-width: 140px;">DESTRUIR</button>
-                    <button id="btn-edit-view" class="btn btn-small" style="min-width: 140px;">REESCREVER</button>
+                    <button class="btn btn-sm" style="flex: 1;" onclick="closeModal('delete-modal')">CANCELAR</button>
+                    <button id="btn-confirm-delete" class="btn btn-sm btn-danger" style="flex: 1;">DESTRUIR_REGISTRO</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="logs-container" class="system-logs">
-        <div>> GIANCARLO_TERMINAL_ONLINE</div>
-        <div>> SISTEMA_NOVA_REAL_ATIVO</div>
-    </div>
+    <div id="logs"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -378,71 +425,73 @@
 
         let currentUser = null;
         let notes = [];
-        let currentViewingNote = null;
+        let noteToDeleteId = null;
+        let currentViewingId = null;
 
-        const el = {
-            loading: document.getElementById('loading-screen'),
-            loginView: document.getElementById('login-view'),
-            dashboardView: document.getElementById('dashboard-view'),
-            loginForm: document.getElementById('login-form'),
-            notesGrid: document.getElementById('notes-grid'),
-            search: document.getElementById('search-input'),
-            noteModal: document.getElementById('note-modal'),
-            viewModal: document.getElementById('view-modal'),
-            noteForm: document.getElementById('note-form'),
-            userInfo: document.getElementById('user-info'),
-            clock: document.getElementById('clock'),
-            logs: document.getElementById('logs-container')
-        };
+        const show = (id) => document.getElementById(id).style.display = 'flex';
+        const hide = (id) => document.getElementById(id).style.display = 'none';
+        window.closeModal = (id) => hide(id);
 
-        function addLog(msg) {
+        function sysLog(msg) {
+            const logs = document.getElementById('logs');
             const div = document.createElement('div');
             div.innerText = `> ${msg}`;
-            el.logs.appendChild(div);
-            if (el.logs.children.length > 8) el.logs.removeChild(el.logs.firstChild);
+            logs.prepend(div);
+            if (logs.children.length > 8) logs.lastChild.remove();
         }
 
-        setInterval(() => { el.clock.innerText = new Date().toLocaleTimeString(); }, 1000);
+        // Relógio e Stats Randômicos
+        setInterval(() => {
+            const clockEl = document.getElementById('clock');
+            if(clockEl) clockEl.innerText = new Date().toLocaleTimeString();
+            
+            const statsEl = document.getElementById('top-stats');
+            if (statsEl && Math.random() > 0.85) {
+                const cpu = Math.floor(Math.random() * 25) + 5;
+                const mem = (Math.random() * 2 + 1).toFixed(1);
+                statsEl.innerText = `IP_UPLINK: 192.168.1.104 | CORE_LOAD: ${cpu}% | RAM: ${mem}GB`;
+            }
+        }, 1000);
 
+        // Monitor de Auth
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
-            el.loading.style.display = 'none';
+            const loadingScreen = document.getElementById('loading-screen');
+            if(loadingScreen) loadingScreen.style.display = 'none';
+            
             if (user) {
-                el.loginView.style.display = 'none';
-                el.dashboardView.style.display = 'block';
-                el.userInfo.innerText = `TERMINAL_AUTH: ${user.email} | OPERADOR: GIANCARLO`;
+                hide('login-view');
+                show('dashboard-view');
+                const userDisplay = document.getElementById('user-display');
+                if(userDisplay) userDisplay.innerText = `OPERADOR: ${user.email.split('@')[0].toUpperCase()} // UID_SECURE: ${user.uid.slice(0,10)}`;
                 initDashboard();
-                addLog("ACESSO_CONCEDIDO_AO_NUCLEO");
+                sysLog("SESSÃO_ATIVA_STABLE");
             } else {
-                el.loginView.style.display = 'block';
-                el.dashboardView.style.display = 'none';
-                addLog("TERMINAL_AGUARDANDO_AUTORIZACAO");
+                show('login-view');
+                hide('dashboard-view');
+                sysLog("SISTEMA_AGUARDANDO_AUTORIZAÇÃO");
             }
         });
 
-        el.loginForm.addEventListener('submit', async (e) => {
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-password').value;
-            const errorEl = document.getElementById('login-error');
-            const submitBtn = document.getElementById('login-submit');
-
-            errorEl.style.display = 'none';
-            submitBtn.innerText = 'PROCESSANDO_CRIPTOGRAFIA...';
             try {
                 await signInWithEmailAndPassword(auth, email, pass);
             } catch (err) {
-                errorEl.innerText = `[!] ACESSO_NEGADO: FALHA NA CHAVE`;
-                errorEl.style.display = 'block';
-                submitBtn.innerText = 'DECRYPT_ACCESS';
+                const errEl = document.getElementById('login-error');
+                if(errEl) errEl.style.display = 'block';
+                sysLog("ERRO_AUTH: CHAVE_INVÁLIDA");
             }
         });
 
         document.getElementById('btn-logout').addEventListener('click', () => {
-            addLog("ENCERRANDO_SESSAO_SEGURA...");
+            sysLog("ENCERRANDO_SESSÃO...");
             signOut(auth);
         });
 
+        // Dashboard Core
         function initDashboard() {
             const notesRef = ref(db, `notes/${currentUser.uid}`);
             onValue(notesRef, (snapshot) => {
@@ -450,49 +499,58 @@
                 notes = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
                 notes.sort((a, b) => b.updatedAt - a.updatedAt);
                 renderNotes();
+                const syncTimeEl = document.getElementById('sync-time');
+                if(syncTimeEl) syncTimeEl.innerText = new Date().toLocaleTimeString();
             });
         }
 
         function renderNotes() {
-            const term = el.search.value.toLowerCase();
+            const searchInput = document.getElementById('search-input');
+            const term = searchInput ? searchInput.value.toLowerCase() : '';
             const filtered = notes.filter(n => 
                 n.title.toLowerCase().includes(term) || 
-                n.content.toLowerCase().includes(term) || 
+                n.content.toLowerCase().includes(term) ||
                 n.author.toLowerCase().includes(term)
             );
-
-            el.notesGrid.innerHTML = filtered.map(note => `
-                <div class="note-card" onclick="viewNote('${note.id}')">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
-                        <span style="font-size: 0.6rem; color: #800; letter-spacing: 1px;">CID_${note.id.slice(0,10).toUpperCase()}</span>
-                        <div style="display: flex; gap: 12px;">
-                            <span onclick="event.stopPropagation(); editNote('${note.id}')" style="font-size: 0.65rem; color: #ff0000; font-weight: bold; cursor: pointer;">[MOD]</span>
-                            <span onclick="event.stopPropagation(); deleteNote('${note.id}')" style="font-size: 0.65rem; color: #600; cursor: pointer;">[DEL]</span>
+            const grid = document.getElementById('notes-grid');
+            if(!grid) return;
+            
+            grid.innerHTML = filtered.map(note => `
+                <div class="terminal-card" onclick="viewNote('${note.id}')">
+                    <div class="terminal-header">
+                        <span>CID_${note.id.slice(0,12).toUpperCase()}</span>
+                        <div style="display: flex; gap: 10px;">
+                            <span class="status-dot"></span>
+                            <span onclick="event.stopPropagation(); editNote('${note.id}')" style="cursor: pointer; color: var(--primary); font-weight: bold;">[MOD]</span>
+                            <span onclick="event.stopPropagation(); requestDelete('${note.id}')" style="cursor: pointer; color: #800;">[DEL]</span>
                         </div>
                     </div>
-                    <h3 class="glitch-text">${note.title}</h3>
-                    <p>${note.content}</p>
-                    <div class="card-footer">
-                        <span>RESP: ${note.author.toUpperCase()}</span>
-                        <span>DATE: ${new Date(note.updatedAt).toLocaleDateString()}</span>
+                    <div class="terminal-body">
+                        <h3>${note.title}</h3>
+                        <p>${note.content}</p>
+                    </div>
+                    <div class="terminal-footer">
+                        <span>TAG: ${note.author.toUpperCase()}</span>
+                        <span>V_${note.updatedAt.toString().slice(-4)}</span>
                     </div>
                 </div>
             `).join('');
         }
 
-        el.search.addEventListener('input', renderNotes);
+        const searchInput = document.getElementById('search-input');
+        if(searchInput) searchInput.addEventListener('input', renderNotes);
 
         window.viewNote = (id) => {
             const note = notes.find(n => n.id === id);
             if (!note) return;
-            currentViewingNote = note;
+            currentViewingId = id;
             document.getElementById('view-title').innerText = note.title;
             document.getElementById('view-content').innerText = note.content;
-            document.getElementById('view-author').innerText = `TÉCNICO_RESPONSÁVEL: ${note.author.toUpperCase()}`;
-            document.getElementById('view-date').innerText = `SINCRONIZADO_EM: ${new Date(note.updatedAt).toLocaleString()}`;
-            document.getElementById('view-id').innerText = `PROTOCOLO_DETALHADO // IDENTIFICADOR_${note.id.toUpperCase()}`;
-            el.viewModal.style.display = 'flex';
-            addLog(`VISUALIZANDO_${id.slice(0,6)}`);
+            document.getElementById('view-author').innerText = `RESPONSÁVEL: ${note.author.toUpperCase()}`;
+            document.getElementById('view-date').innerText = `SINCRONIZADO: ${new Date(note.updatedAt).toLocaleString()}`;
+            document.getElementById('view-header-tag').innerText = `REGISTRO_DECRIPTADO // IDENT: ${id.toUpperCase()}`;
+            show('view-modal');
+            sysLog(`ABRINDO_REGISTRO_${id.slice(0,6)}`);
         };
 
         window.editNote = (id) => {
@@ -502,33 +560,35 @@
             document.getElementById('note-title').value = note.title;
             document.getElementById('note-author').value = note.author;
             document.getElementById('note-content').value = note.content;
-            document.getElementById('modal-title').innerText = 'MODIFICAR_PROTOCOLO';
-            el.noteModal.style.display = 'flex';
-            el.viewModal.style.display = 'none';
+            document.getElementById('edit-modal-title').innerText = 'MODIFICAR_REGISTRO_SISTEMA';
+            show('edit-modal');
+            hide('view-modal');
         };
 
-        window.deleteNote = async (id) => {
-            if (confirm(`DESEJA_REALMENTE_RASGAR_O_REGISTRO_${id.slice(0,8)}?`)) {
-                await remove(ref(db, `notes/${currentUser.uid}/${id}`));
-                addLog(`DADOS_EXPURGADOS_${id.slice(0,6)}`);
-                el.viewModal.style.display = 'none';
+        window.requestDelete = (id) => {
+            noteToDeleteId = id;
+            show('delete-modal');
+        };
+
+        document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
+            if (noteToDeleteId) {
+                await remove(ref(db, `notes/${currentUser.uid}/${noteToDeleteId}`));
+                sysLog(`DADOS_DESTRUIDOS_${noteToDeleteId.slice(0,6)}`);
+                hide('delete-modal');
+                hide('view-modal');
+                noteToDeleteId = null;
             }
-        };
-
-        document.getElementById('btn-new-note').addEventListener('click', () => {
-            el.noteForm.reset();
-            document.getElementById('note-id').value = '';
-            document.getElementById('note-author').value = 'Giancarlo';
-            document.getElementById('modal-title').innerText = 'NOVO_REGISTRO_CLIENTE';
-            el.noteModal.style.display = 'flex';
         });
 
-        document.getElementById('btn-cancel-modal').addEventListener('click', () => el.noteModal.style.display = 'none');
-        document.getElementById('btn-close-view').addEventListener('click', () => el.viewModal.style.display = 'none');
-        document.getElementById('btn-edit-view').addEventListener('click', () => editNote(currentViewingNote.id));
-        document.getElementById('btn-delete-view').addEventListener('click', () => deleteNote(currentViewingNote.id));
+        document.getElementById('btn-add').addEventListener('click', () => {
+            document.getElementById('note-form').reset();
+            document.getElementById('note-id').value = '';
+            document.getElementById('note-author').value = 'Giancarlo';
+            document.getElementById('edit-modal-title').innerText = 'NOVO_REGISTRO_CENTRAL';
+            show('edit-modal');
+        });
 
-        el.noteForm.addEventListener('submit', async (e) => {
+        document.getElementById('note-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('note-id').value;
             const noteData = {
@@ -540,14 +600,18 @@
 
             if (id) {
                 await update(ref(db, `notes/${currentUser.uid}/${id}`), noteData);
-                addLog("MÉTODO_SINCRONIZADO_COM_SUCESSO");
+                sysLog("REGISTRO_ATUALIZADO");
             } else {
                 const newRef = push(ref(db, `notes/${currentUser.uid}`));
                 await set(newRef, noteData);
-                addLog("NOVO_MÉTODO_REGISTRADO_NA_CENTRAL");
+                sysLog("NOVO_REGISTRO_COMMIT");
             }
-            el.noteModal.style.display = 'none';
+            hide('edit-modal');
         });
+
+        document.getElementById('btn-view-edit').addEventListener('click', () => editNote(currentViewingId));
+        document.getElementById('btn-view-delete').addEventListener('click', () => requestDelete(currentViewingId));
+
     </script>
 </body>
 </html>
