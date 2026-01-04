@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVA REAL - Terminal de Informações</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff0000;
+            --primary-dim: #600000;
+            --primary-dark: #2a0000;
+            --primary-bg: #0a0000;
+            --glow: 0 0 12px rgba(255, 0, 0, 0.6);
+            --font-mono: 'JetBrains Mono', monospace;
+            --font-terminal: 'VT323', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-dim) transparent;
+        }
+
+        body {
+            background-color: #050000;
+            color: var(--primary);
+            font-family: var(--font-mono);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        #root {
+            height: 100%;
+            width: 100%;
+            overflow-y: auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Decorative Background Stripes (Reference Image) */
+        .bg-stripes {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 600px;
+            height: 100%;
+            background: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 40px,
+                rgba(255, 0, 0, 0.05) 40px,
+                rgba(255, 0, 0, 0.05) 80px
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Paper & CRT Texture Layer */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("https://www.transparenttextures.com/patterns/pinstriped-suit.png");
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* Moving Grid Background */
+        .grid-background {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image: 
+                linear-gradient(rgba(255, 0, 0, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            transform: perspective(1000px) rotateX(60deg);
+            transform-origin: center;
+            animation: move-grid 40s linear infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @keyframes move-grid {
+            0% { transform: perspective(1000px) rotateX(60deg) translateY(0); }
+            100% { transform: perspective(1000px) rotateX(60deg) translateY(60px); }
+        }
+
+        /* Side Deco Animations */
+        .side-deco {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, transparent, var(--primary), transparent);
+            animation: side-move 4s ease-in-out infinite;
+            z-index: 2;
+            opacity: 0.3;
+        }
+        .side-left { left: 10px; }
+        .side-right { right: 10px; }
+
+        @keyframes side-move {
+            0%, 100% { transform: scaleY(0.5); opacity: 0.1; }
+            50% { transform: scaleY(1.2); opacity: 0.5; }
+        }
+
+        /* CRT Scanlines */
+        .scanlines {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 3px;
+            z-index: 1001;
+            pointer-events: none;
+            opacity: 0.2;
+        }
+
+        .crt-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.6) 100%);
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Typography */
+        .glitch-text {
+            position: relative;
+            text-shadow: var(--glow);
+            animation: glitch 5s infinite;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        @keyframes glitch {
+            0%, 95%, 100% { transform: none; text-shadow: var(--glow); }
+            96% { transform: skew(5deg); text-shadow: 2px 0 red, -2px 0 #300; }
+            97% { transform: skew(-5deg); text-shadow: -2px 0 red, 2px 0 #300; }
+            98% { transform: skew(2deg); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            position: relative;
+            z-index: 20;
+        }
+
+        /* UI Elements */
+        .auth-box {
+            width: 90%;
+            max-width: 450px;
+            background: rgba(10, 0, 0, 0.98);
+            border: 1px solid var(--primary);
+            padding: 3rem;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.2);
+            z-index: 100;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: #000;
+            border: 1px solid var(--primary-dim);
+            color: var(--primary);
+            padding: 14px;
+            font-family: var(--font-mono);
+            outline: none;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background: rgba(128, 0, 0, 0.1);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-family: var(--font-mono);
+            width: 100%;
+            transition: 0.3s;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: var(--glow);
+        }
+
+        /* Dashboard Styles */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px double var(--primary-dim);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+            padding-bottom: 150px;
+        }
+
+        .note-card {
+            background: rgba(15, 0, 0, 0.9);
+            border: 1px solid var(--primary-dim);
+            padding: 24px;
+            position: relative;
+            clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
+            transition: 0.3s;
+        }
+
+        .note-card:hover {
+            transform: scale(1.02);
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.1);
+        }
+
+        /* MODAL FIX: Using position fixed and top level z-index */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #000;
+            border: 1px solid var(--primary);
+            padding: 40px;
+            width: 95%;
+            max-width: 700px;
+            box-shadow: 0 0 60px rgba(255, 0, 0, 0.4);
+            position: relative;
+            z-index: 10000;
+        }
+
+        /* Decorative Bars */
+        .progress-bar-container {
+            width: 100%;
+            height: 2px;
+            background: var(--primary-dark);
+            margin: 10px 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 30%;
+            animation: loading-bar 3s ease-in-out infinite;
+        }
+
+        @keyframes loading-bar {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(400%); }
+        }
+
+        .system-logs {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.65rem;
+            color: var(--primary-dim);
+            text-align: right;
+            z-index: 100;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-right: 2px solid var(--primary);
+        }
+
+        .status-header {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            height: 30px;
+            background: var(--primary-bg);
+            border-bottom: 1px solid var(--primary-dim);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 0.6rem;
+            justify-content: space-between;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .loading-screen {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            color: var(--primary);
+            font-family: var(--font-terminal);
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary-dim); }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@^19.2.3",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+        "react/": "https://esm.sh/react@^19.2.3/",
+        "firebase/": "https://esm.sh/firebase@^12.7.0/"
+      }
+    }
+    </script>
+</head>
+<body>
+    <div class="bg-stripes"></div>
+    <div class="status-header">
+        <div>TERMINAL: NOVA REAL | PROTOCOLO_ESTÁVEL</div>
+        <div id="clock">00:00:00</div>
+        <div>SYS_ADMIN: GIANCARLO</div>
+    </div>
+    <div class="side-deco side-left"></div>
+    <div class="side-deco side-right"></div>
+    <div class="crt-overlay"></div>
+    <div class="scanlines"></div>
+    <div class="grid-background"></div>
+    <div id="root"></div>
+    <script>
+        setInterval(() => {
+            const clock = document.getElementById('clock');
+            if (clock) clock.innerText = new Date().toLocaleTimeString();
+        }, 1000);
+    </script>
+</body>
+</html>

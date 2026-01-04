@@ -1,0 +1,5 @@
+{
+  "name": "Crimson Terminal Dashboard",
+  "description": "A vintage hacker-style note management system using Firebase Realtime Database and Auth, featuring a striking red aesthetic and full CRUD capabilities.",
+  "requestFramePermissions": []
+}
