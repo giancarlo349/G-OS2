@@ -179,7 +179,6 @@
             padding-top: 20px;
         }
 
-        /* Tronco Central */
         .notes-column::before {
             content: "";
             position: absolute;
@@ -193,12 +192,11 @@
             z-index: 1;
         }
 
-        /* Na coluna da direita, a linha sobe até o topo do dashboard */
         .dash-right-main::before {
             content: "";
             position: absolute;
             left: 50%;
-            top: -40px; /* Sobe até o padding do container */
+            top: -40px;
             height: 40px;
             width: 2px;
             background: var(--primary);
@@ -241,8 +239,8 @@
             z-index: 3;
         }
 
-        .note-node.side-left { justify-content: flex-start; padding-left: 0; }
-        .note-node.side-right { justify-content: flex-end; padding-right: 0; }
+        .note-node.side-left { justify-content: flex-start; }
+        .note-node.side-right { justify-content: flex-end; }
 
         .note-node.side-left::before { left: 50%; transform: translateX(-100%); width: calc(45% - 10px); }
         .note-node.side-right::before { right: 50%; transform: translateX(100%); width: calc(45% - 10px); }
@@ -282,7 +280,7 @@
             background: #050000;
         }
 
-        /* Overlay & Modals */
+        /* Investigative Modals */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.98); z-index: 10000;
@@ -292,12 +290,12 @@
 
         .modal {
             background: #010000; border: 1px solid var(--primary);
-            max-width: 900px; width: 100%; position: relative;
+            max-width: 950px; width: 100%; position: relative;
             box-shadow: 0 0 150px rgba(255, 0, 0, 0.4);
-            animation: modal-entry 0.4s ease-out;
+            animation: modal-entry 0.4s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
-        @keyframes modal-entry { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes modal-entry { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
         .modal-header {
             padding: 20px 30px; background: #1a0000;
@@ -306,21 +304,54 @@
             font-size: 0.85rem; font-weight: bold; letter-spacing: 4px; color: var(--primary);
         }
 
-        .modal-body { padding: 40px; max-height: 85vh; overflow-y: auto; color: var(--primary); }
+        .modal-body { padding: 45px; max-height: 85vh; overflow-y: auto; color: var(--primary); }
 
         .view-content-area {
             font-family: var(--font-mono); font-size: 1.1rem; line-height: 1.8;
             color: #ff3333; white-space: pre-wrap; margin-bottom: 40px;
-            padding: 30px; background: rgba(255, 0, 0, 0.05);
+            padding: 35px; background: rgba(255, 0, 0, 0.05);
             border: 1px solid var(--primary-dark);
+            box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.1);
+        }
+
+        .view-title-main {
+            margin-bottom: 25px; 
+            font-size: 3.2rem; 
+            text-transform: uppercase; 
+            color: var(--primary); 
+            letter-spacing: 4px;
+            border-left: 10px solid var(--primary);
+            padding-left: 20px;
+        }
+
+        /* Labels and Textures */
+        .investigative-label {
+            font-size: 0.75rem; color: var(--primary-dim); letter-spacing: 2px;
+            text-transform: uppercase; margin-bottom: 15px; display: block;
+        }
+
+        /* Buttons Aesthetic */
+        .btn-investigative {
+            min-width: 200px;
+            padding: 15px 30px;
+            font-size: 0.85rem;
+        }
+
+        .dash-clock {
+            font-family: var(--font-terminal);
+            font-size: 2.5rem;
+            color: var(--primary-dim);
+            letter-spacing: 4px;
+            border-left: 2px solid var(--primary-dark);
+            padding-left: 20px;
         }
 
         /* Visual Effects */
         .glitch { animation: glitch-anim 6s infinite; }
         @keyframes glitch-anim {
             0%, 90% { transform: none; opacity: 1; }
-            92% { transform: translateX(2px); }
-            94% { transform: translateX(-2px); }
+            92% { transform: skewX(10deg); opacity: 0.8; }
+            94% { transform: skewX(-10deg); opacity: 0.9; }
             96% { transform: none; }
         }
 
@@ -346,15 +377,6 @@
 
         .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; background: var(--primary); box-shadow: 0 0 8px var(--primary); animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        .dash-clock {
-            font-family: var(--font-terminal);
-            font-size: 2.5rem;
-            color: var(--primary-dim);
-            letter-spacing: 4px;
-            border-left: 2px solid var(--primary-dark);
-            padding-left: 20px;
-        }
 
         /* Responsive */
         @media (max-width: 1000px) {
@@ -415,13 +437,13 @@
                     <p id="user-display" style="font-size: 0.8rem; color: var(--primary-dim); margin-bottom: 30px; letter-spacing: 2px;"></p>
 
                     <div class="dash-actions-group">
-                        <button id="btn-add" class="btn btn-sm">NOVO_REGISTRO</button>
-                        <button id="btn-logout" class="btn btn-sm btn-danger">DISCONNECT</button>
+                        <button id="btn-add" class="btn btn-sm">NOVO_REGISTRO_COMMIT</button>
+                        <button id="btn-logout" class="btn btn-sm btn-danger">TERMINAL_DISCONNECT</button>
                     </div>
 
                     <div class="field" style="max-width: 100%; margin-bottom: 40px;">
-                        <label>SCANNER_DE_DADOS_GRID</label>
-                        <input type="text" id="search-input" placeholder="BUSCAR POR CID OU PROTOCOLO...">
+                        <label>SCANNER_DE_DADOS_GRID (CID/PROTOCOL)</label>
+                        <input type="text" id="search-input" placeholder="EXECUTAR BUSCA DE DADOS CRIPTOGRAFADOS...">
                     </div>
 
                     <div class="sys-panels-grid">
@@ -431,8 +453,8 @@
                             <span style="color: var(--primary)">SEC:</span> AES-256
                         </div>
                         <div class="sys-panel">
-                            <span style="color: var(--primary)">PING:</span> 12ms<br>
-                            <span style="color: var(--primary)">LAST:</span> <span id="sync-time">NOW</span>
+                            <span style="color: var(--primary)">LATÊNCIA:</span> 12ms<br>
+                            <span style="color: var(--primary)">SINC:</span> <span id="sync-time">NOW</span>
                         </div>
                     </div>
 
@@ -450,27 +472,27 @@
     <div id="edit-modal" class="overlay">
         <div class="modal">
             <div class="modal-header">
-                <span id="edit-modal-title">EDIT_INTERFACE</span>
-                <span style="cursor: pointer; color: var(--primary);" onclick="closeModal('edit-modal')">[ FECHAR ]</span>
+                <span id="edit-modal-title">COMMIT_PROTOCOL_INTERFACE</span>
+                <span style="cursor: pointer; color: var(--primary);" onclick="closeModal('edit-modal')">[ CANCEL_X ]</span>
             </div>
             <div class="modal-body">
                 <form id="note-form">
                     <input type="hidden" id="note-id">
                     <div class="field">
-                        <label>TITULO_DO_REGISTRO</label>
-                        <input type="text" id="note-title" required placeholder="NOME DO CLIENTE / OPERACAO">
+                        <label>CID_TITLE (IDENTIFICADOR)</label>
+                        <input type="text" id="note-title" required placeholder="EX: OPERAÇÃO_DELTA_7">
                     </div>
                     <div class="field">
-                        <label>OPERADOR_LOGADO</label>
+                        <label>OPERATOR_TAG (ASSINATURA)</label>
                         <input type="text" id="note-author" value="Giancarlo" required>
                     </div>
                     <div class="field">
-                        <label>CONTEUDO_DO_PROTOCOLO</label>
-                        <textarea id="note-content" style="height: 250px;" required placeholder="Protocolos, links, credenciais..."></textarea>
+                        <label>RAW_DATA_ENCRYPTED (JSON/PROTOCOLO/TEXTO)</label>
+                        <textarea id="note-content" style="height: 300px;" required placeholder="Insira protocolos, links, chaves e dados operacionais de investigação..."></textarea>
                     </div>
                     <div style="display: flex; gap: 20px;">
-                        <button type="button" class="btn btn-danger" onclick="closeModal('edit-modal')">DESCARTAR</button>
-                        <button type="submit" class="btn">EFETIVAR_COMMIT</button>
+                        <button type="button" class="btn btn-danger" onclick="closeModal('edit-modal')">ABORT_COMMIT</button>
+                        <button type="submit" class="btn">EFETIVAR_UPLOAD_COMMIT</button>
                     </div>
                 </form>
             </div>
@@ -479,21 +501,21 @@
 
     <!-- MODAL: VISUALIZAR -->
     <div id="view-modal" class="overlay">
-        <div class="modal" style="max-width: 1000px;">
+        <div class="modal">
             <div class="modal-header">
-                <span id="view-header-tag">DATA_ANALYSIS_VIEW</span>
-                <span style="cursor: pointer; color: var(--primary);" onclick="closeModal('view-modal')">[ FECHAR ]</span>
+                <span id="view-header-tag">DECRYPTED_RECORD_ANALYSIS</span>
+                <span style="cursor: pointer; color: var(--primary);" onclick="closeModal('view-modal')">[ EXIT_X ]</span>
             </div>
             <div class="modal-body">
-                <h2 id="view-title" class="glitch" style="margin-bottom: 25px; font-size: 3rem; text-transform: uppercase;"></h2>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--primary-dim); margin-bottom: 40px; border-bottom: 1px solid var(--primary-dark); padding-bottom: 15px;">
+                <h2 id="view-title" class="glitch view-title-main"></h2>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--primary-dim); margin-bottom: 40px; border-bottom: 1px solid var(--primary-dark); padding-bottom: 20px; letter-spacing: 2px;">
                     <span id="view-author"></span>
                     <span id="view-date"></span>
                 </div>
                 <div id="view-content" class="view-content-area"></div>
-                <div style="display: flex; gap: 20px; justify-content: flex-end;">
-                    <button id="btn-view-delete" class="btn btn-sm btn-danger">DELETAR</button>
-                    <button id="btn-view-edit" class="btn btn-sm">EDITAR</button>
+                <div style="display: flex; gap: 25px; justify-content: flex-end;">
+                    <button id="btn-view-delete" class="btn btn-sm btn-danger btn-investigative">WIPE_FROM_GRID</button>
+                    <button id="btn-view-edit" class="btn btn-sm btn-investigative">RE-COMMIT_DATA</button>
                 </div>
             </div>
         </div>
@@ -501,15 +523,18 @@
 
     <!-- MODAL: DELETE -->
     <div id="delete-modal" class="overlay">
-        <div class="modal" style="max-width: 450px; border-color: #f00;">
+        <div class="modal" style="max-width: 550px; border-color: #f00;">
             <div class="modal-header" style="background: #400;">
-                <span>DESTRUCTION_WARNING</span>
+                <span>DESTRUCTION_SEQUENCE_WARNING</span>
             </div>
             <div class="modal-body" style="text-align: center;">
-                <p style="margin-bottom: 35px; font-size: 1rem; color: var(--primary);">CONFIRMAR EXCLUSÃO PERMANENTE?</p>
-                <div style="display: flex; gap: 15px;">
-                    <button class="btn btn-sm" onclick="closeModal('delete-modal')">CANCELAR</button>
-                    <button id="btn-confirm-delete" class="btn btn-sm btn-danger">DESTRUIR</button>
+                <p style="margin-bottom: 45px; font-size: 1.2rem; line-height: 1.8; font-family: var(--font-terminal); color: #f44;">
+                    ESTE REGISTRO SERÁ PERMANENTEMENTE EXPURGADO DO BANCO CENTRAL DE DADOS.<br><br>
+                    CONFIRMAR EXECUÇÃO DA SEQUÊNCIA DE DESTRUIÇÃO?
+                </p>
+                <div style="display: flex; gap: 20px;">
+                    <button class="btn btn-sm" style="flex: 1;" onclick="closeModal('delete-modal')">ABORT_WIPE</button>
+                    <button id="btn-confirm-delete" class="btn btn-sm btn-danger" style="flex: 1;">EXECUTE_WIPE_PERMANENT</button>
                 </div>
             </div>
         </div>
@@ -584,13 +609,13 @@
                 hide('login-view');
                 show('dashboard-view', true);
                 const userDisplay = document.getElementById('user-display');
-                if(userDisplay) userDisplay.innerText = `PILOTO_ID: ${user.email.toUpperCase()} // SYNC_STATUS: ESTÁVEL`;
+                if(userDisplay) userDisplay.innerText = `PILOTO_ID: ${user.email.toUpperCase()} // SYNC_STATUS: ESTÁVEL_EVA-01`;
                 initDashboard();
-                sysLog("SESSÃO_INICIADA: EVA-01 ONLINE");
+                sysLog("SESSÃO_INICIADA: CONEXÃO NEURAL ATIVA");
             } else {
                 show('login-view');
                 hide('dashboard-view');
-                sysLog("SISTEMA_AGUARDANDO_AUTENTICAÇÃO");
+                sysLog("SISTEMA_AGUARDANDO_AUTENTICAÇÃO_NÍVEL_3");
             }
         });
 
@@ -603,12 +628,12 @@
             } catch (err) {
                 const errEl = document.getElementById('login-error');
                 if(errEl) errEl.style.display = 'block';
-                sysLog("FALHA_DE_CONEXÃO: CHAVE INCORRETA");
+                sysLog("FALHA_CONEXÃO: CHAVE DE SEGURANÇA INVÁLIDA");
             }
         });
 
         document.getElementById('btn-logout').addEventListener('click', () => {
-            sysLog("TERMINANDO CONEXÃO NEURAL...");
+            sysLog("TERMINANDO CONEXÃO NEURAL... EXPURGANDO SESSÃO.");
             signOut(auth);
         });
 
@@ -641,7 +666,7 @@
             col2.innerHTML = '';
 
             if (filtered.length === 0) {
-                col1.innerHTML = '<p style="color: var(--primary-dark); letter-spacing: 5px;">SEM DADOS</p>';
+                col1.innerHTML = '<p style="color: var(--primary-dark); letter-spacing: 5px; font-family: var(--font-terminal);">SEM_DADOS_GRID_DETECTADOS</p>';
                 return;
             }
 
@@ -653,10 +678,10 @@
                     <div class="note-node ${side}">
                         <div class="terminal-card" onclick="viewNote('${note.id}')">
                             <div class="terminal-header">
-                                <span>CID: ${note.id.slice(0,8).toUpperCase()}</span>
+                                <span>IDENT: ${note.id.slice(0,10).toUpperCase()}</span>
                                 <div style="display: flex; gap: 8px;">
                                     <span class="status-dot"></span>
-                                    <span onclick="event.stopPropagation(); editNote('${note.id}')" style="cursor: pointer; font-weight: bold;">[MOD]</span>
+                                    <span onclick="event.stopPropagation(); editNote('${note.id}')" style="cursor: pointer; color: var(--primary); font-weight: bold;">[MOD]</span>
                                     <span onclick="event.stopPropagation(); requestDelete('${note.id}')" style="cursor: pointer; color: #800;">[WIP]</span>
                                 </div>
                             </div>
@@ -686,11 +711,11 @@
             currentViewingId = id;
             document.getElementById('view-title').innerText = note.title;
             document.getElementById('view-content').innerText = note.content;
-            document.getElementById('view-author').innerText = `RESPONSAVEL: ${note.author.toUpperCase()}`;
-            document.getElementById('view-date').innerText = `SINCRONIZADO: ${new Date(note.updatedAt).toLocaleString()}`;
-            document.getElementById('view-header-tag').innerText = `CID_REPORT: ${id.toUpperCase()}`;
+            document.getElementById('view-author').innerText = `ANALISTA_RESPONSÁVEL: ${note.author.toUpperCase()}`;
+            document.getElementById('view-date').innerText = `SINCRONIZADO_ESTAÇÃO: ${new Date(note.updatedAt).toLocaleString()}`;
+            document.getElementById('view-header-tag').innerText = `CID_ANALYSIS_VIEW: ${id.toUpperCase()}`;
             show('view-modal', true);
-            sysLog(`ANÁLISE_CID: ACESSANDO ${id.slice(0,6)}`);
+            sysLog(`ANÁLISE_DADOS: ACESSANDO_CID_${id.slice(0,6)}`);
         };
 
         window.editNote = (id) => {
@@ -700,7 +725,7 @@
             document.getElementById('note-title').value = note.title;
             document.getElementById('note-author').value = note.author;
             document.getElementById('note-content').value = note.content;
-            document.getElementById('edit-modal-title').innerText = 'MODIFICAR_REGISTRO';
+            document.getElementById('edit-modal-title').innerText = 'MODIFICAR_PROTOCOLO_SISTEMA';
             show('edit-modal', true);
             hide('view-modal');
         };
@@ -713,7 +738,7 @@
         document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
             if (noteToDeleteId) {
                 await remove(ref(db, `notes/${currentUser.uid}/${noteToDeleteId}`));
-                sysLog(`PROTOCOLO_WIPED: ${noteToDeleteId.slice(0,6)}`);
+                sysLog(`PROTOCOLO_WIPED: CID_${noteToDeleteId.slice(0,6)}`);
                 hide('delete-modal');
                 hide('view-modal');
                 noteToDeleteId = null;
@@ -724,7 +749,7 @@
             document.getElementById('note-form').reset();
             document.getElementById('note-id').value = '';
             document.getElementById('note-author').value = 'Giancarlo';
-            document.getElementById('edit-modal-title').innerText = 'NOVO_COMMIT_PROTOCOLO';
+            document.getElementById('edit-modal-title').innerText = 'INICIAR_NOVO_COMMIT_PROTOCOLO';
             show('edit-modal', true);
         });
 
@@ -740,11 +765,11 @@
 
             if (id) {
                 await update(ref(db, `notes/${currentUser.uid}/${id}`), noteData);
-                sysLog("BANCO_DE_DADOS_ATUALIZADO");
+                sysLog("BANCO_DE_DADOS_ATUALIZADO: COMMIT_OK");
             } else {
                 const newRef = push(ref(db, `notes/${currentUser.uid}`));
                 await set(newRef, noteData);
-                sysLog("NOVO_REGISTRO_ENVIADO");
+                sysLog("NOVO_REGISTRO_ENVIADO: COMMIT_SUCCESS");
             }
             hide('edit-modal');
         });
