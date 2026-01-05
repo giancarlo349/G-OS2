@@ -4,18 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOVA REAL - Terminal v3.5</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=VT323&display=swap" rel="stylesheet">
+    <title>MAGI-B01 // Gestão Papelaria</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #ff0000;
-            --primary-dim: #800000;
-            --primary-dark: #300000;
-            --primary-bg: #020000;
-            --glow: 0 0 15px rgba(255, 0, 0, 0.6);
+            --bg-deep: #050b0d;
+            --bg-panel: #0a1619;
+            --accent: #33cccc;
+            --accent-dim: #1a4d4d;
+            --text-main: #a3c2c2;
+            --text-bright: #e6ffff;
+            --border-color: #1f4d4d;
             --font-mono: 'JetBrains Mono', monospace;
-            --font-terminal: 'VT323', monospace;
-            --circuit-line: #600000;
+            --font-sans: 'Inter', sans-serif;
         }
 
         * {
@@ -23,71 +24,73 @@
             margin: 0;
             padding: 0;
             scrollbar-width: thin;
-            scrollbar-color: var(--primary-dim) transparent;
+            scrollbar-color: var(--accent-dim) transparent;
         }
 
         body {
-            background-color: var(--primary-bg);
-            color: var(--primary);
-            font-family: var(--font-mono);
-            overflow: hidden;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
             height: 100vh;
             width: 100vw;
         }
 
-        /* Hacker Background Effects */
-        .bg-stripes {
-            position: fixed;
-            top: 0; right: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(-45deg, transparent, transparent 50px, rgba(255, 0, 0, 0.02) 50px, rgba(255, 0, 0, 0.02) 100px);
-            pointer-events: none; z-index: 1;
-        }
-
-        .grid-bg {
+        /* Background Graphics */
+        .bg-grid {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-image: linear-gradient(rgba(255, 0, 0, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 0, 0, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none; z-index: 1;
+            background-image: linear-gradient(var(--bg-panel) 1px, transparent 1px), linear-gradient(90deg, var(--bg-panel) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.5;
         }
 
-        .scanline {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.2) 50%);
-            background-size: 100% 4px;
-            pointer-events: none; z-index: 1001; opacity: 0.3;
-        }
-
-        .crt-vignette {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.8) 100%);
-            pointer-events: none; z-index: 1000;
+        .side-decoration {
+            position: fixed;
+            top: 60px;
+            right: 20px;
+            width: 250px;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--accent-dim);
+            pointer-events: none;
+            line-height: 1.2;
+            z-index: 0;
+            opacity: 0.6;
         }
 
         #app {
             height: 100%; width: 100%;
             display: flex; flex-direction: column;
-            position: relative; z-index: 10;
+            position: relative;
+            z-index: 10;
         }
 
-        /* Top System Bar */
-        .top-bar {
-            height: 35px;
-            background: #000;
-            border-bottom: 1px solid var(--primary-dim);
+        /* Header System Bar */
+        .system-bar {
+            height: 40px;
+            background: var(--bg-panel);
+            border-bottom: 2px solid var(--accent);
             display: flex; justify-content: space-between; align-items: center;
-            padding: 0 20px; font-size: 0.7rem; letter-spacing: 1px;
-            color: var(--primary-dim);
+            padding: 0 20px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            letter-spacing: 1px;
         }
 
-        /* View Containers */
         .view-container {
             flex: 1;
             overflow-y: auto;
             padding: 40px;
-            position: relative;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
         }
 
+        /* Login Layout */
         #login-view {
             display: none;
             flex-direction: column;
@@ -96,366 +99,217 @@
             height: 100%;
         }
 
+        .terminal-box {
+            width: 100%; max-width: 420px;
+            background: var(--bg-panel);
+            border: 1px solid var(--accent);
+            padding: 40px;
+            position: relative;
+            box-shadow: 0 0 20px rgba(51, 204, 204, 0.1);
+        }
+
+        .terminal-box::before {
+            content: "AUTH_REQUIRED";
+            position: absolute; top: -10px; left: 20px;
+            background: var(--bg-deep); padding: 0 10px;
+            font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent);
+        }
+
+        /* Forms */
+        .field { margin-bottom: 20px; }
+        .field label { 
+            display: block; font-family: var(--font-mono);
+            font-size: 0.7rem; color: var(--accent); 
+            margin-bottom: 8px; text-transform: uppercase;
+        }
+        input, textarea {
+            width: 100%; background: rgba(0,0,0,0.3); 
+            border: 1px solid var(--border-color);
+            color: var(--text-bright); padding: 12px; 
+            font-family: var(--font-mono); font-size: 0.9rem;
+            outline: none; transition: 0.3s;
+        }
+        input:focus, textarea:focus { border-color: var(--accent); background: rgba(51, 204, 204, 0.05); }
+
+        .btn {
+            background: transparent; border: 1px solid var(--accent);
+            color: var(--accent); padding: 12px; cursor: pointer;
+            font-family: var(--font-mono); font-weight: bold;
+            text-transform: uppercase; letter-spacing: 2px;
+            transition: 0.3s; width: 100%;
+        }
+        .btn:hover { background: var(--accent); color: var(--bg-deep); box-shadow: 0 0 15px var(--accent); }
+        .btn-sm { padding: 6px 14px; font-size: 0.75rem; width: auto; }
+        .btn-danger { color: #ff5555; border-color: #662222; }
+        .btn-danger:hover { background: #ff5555; color: white; box-shadow: 0 0 15px #ff5555; }
+
+        /* Dashboard Grid */
         #dashboard-view {
             display: none;
             width: 100%;
-            max-width: 1800px;
-            margin: 0 auto;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1.2fr 1fr;
             gap: 60px;
         }
 
-        /* Login Box Styling */
-        .login-box {
-            width: 100%; max-width: 420px;
-            border: 1px solid var(--primary);
-            background: rgba(10, 0, 0, 0.95);
-            padding: 50px 40px;
-            box-shadow: 0 0 40px rgba(255, 0, 0, 0.25);
-            position: relative;
+        .dash-header { margin-bottom: 40px; }
+        .dash-title {
+            font-family: var(--font-mono); font-size: 2.8rem;
+            color: var(--text-bright); margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(51, 204, 204, 0.4);
+        }
+        .dash-clock { font-family: var(--font-mono); font-size: 1.2rem; color: var(--accent); opacity: 0.8; }
+
+        /* Note Cards (Window Style) */
+        .notes-column { display: flex; flex-direction: column; gap: 40px; position: relative; }
+        
+        /* Central Trunk Line */
+        .dash-left-main::after {
+            content: ""; position: absolute; left: calc(50% + 30px); top: 150px; bottom: 0;
+            width: 1px; background: var(--border-color); opacity: 0.3; pointer-events: none;
         }
 
-        .login-box::before {
-            content: "[ PROTOCOLO DE ACESSO ]";
-            position: absolute; top: -12px; left: 50%;
-            transform: translateX(-50%);
-            background: var(--primary-bg); padding: 0 15px; font-size: 0.65rem; color: var(--primary);
-            letter-spacing: 2px;
+        .note-window {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            position: relative; transition: 0.3s;
+            cursor: pointer;
+        }
+        .note-window:hover { border-color: var(--accent); transform: translateX(5px); }
+        
+        .window-header {
+            background: var(--border-color); color: var(--bg-deep);
+            padding: 4px 12px; font-family: var(--font-mono);
+            font-size: 0.65rem; display: flex; justify-content: space-between;
         }
 
-        /* Form Elements */
-        .field { margin-bottom: 25px; }
-        .field label { display: block; font-size: 0.65rem; color: var(--primary-dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        input, textarea {
-            width: 100%; background: #000; border: 1px solid var(--primary-dark);
-            color: var(--primary); padding: 14px; font-family: var(--font-mono);
-            font-size: 0.9rem; outline: none; transition: 0.2s;
-        }
-        input::placeholder, textarea::placeholder { color: var(--primary-dark); }
-        input:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 12px rgba(255,0,0,0.3); }
+        .window-body { padding: 20px; }
+        .window-body h3 { font-size: 1rem; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; }
+        .window-body p { font-size: 0.85rem; line-height: 1.5; color: var(--text-main); max-height: 4.5em; overflow: hidden; }
 
-        .btn {
-            background: rgba(255, 0, 0, 0.1); border: 1px solid var(--primary);
-            color: var(--primary); padding: 14px 24px; cursor: pointer;
-            font-family: var(--font-mono); text-transform: uppercase; font-weight: bold;
-            letter-spacing: 2px; transition: 0.3s; width: 100%;
-        }
-        .btn:hover { background: var(--primary); color: #000; box-shadow: var(--glow); }
-        .btn-sm { padding: 8px 16px; font-size: 0.75rem; width: auto; }
-        .btn-danger { color: #f44; border-color: #600; background: rgba(100, 0, 0, 0.1); }
-        .btn-danger:hover { background: #800; color: #fff; }
-
-        /* Dashboard Aesthetic */
-        .dash-left-main { display: flex; flex-direction: column; }
-        .dash-right-main { display: flex; flex-direction: column; position: relative; }
-
-        .dash-title-group { 
-            margin-bottom: 25px; 
-            display: flex;
-            align-items: baseline;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .dash-actions-group { display: flex; gap: 15px; margin-bottom: 25px; }
-
-        .sys-panels-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px;
-            margin-bottom: 30px;
+        .window-footer {
+            padding: 8px 12px; font-family: var(--font-mono);
+            font-size: 0.6rem; color: var(--accent-dim);
+            border-top: 1px solid rgba(51, 204, 204, 0.1);
+            display: flex; justify-content: space-between;
         }
 
-        .sys-panel {
-            border: 1px solid var(--primary-dark); padding: 12px; font-size: 0.6rem;
-            background: rgba(255, 0, 0, 0.02); line-height: 1.5;
-            border-left: 2px solid var(--primary-dim);
-        }
-
-        /* --- MIND MAP / PATTERN SYSTEM --- */
-        .notes-column {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 400px;
-            padding-top: 20px;
-        }
-
-        .notes-column::before {
-            content: "";
-            position: absolute;
-            left: 50%;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: linear-gradient(to bottom, var(--primary), var(--primary-dim), var(--primary), transparent);
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
-            transform: translateX(-50%);
-            z-index: 1;
-        }
-
-        .dash-right-main::before {
-            content: "";
-            position: absolute;
-            left: 50%;
-            top: -40px;
-            height: 40px;
-            width: 2px;
-            background: var(--primary);
-            box-shadow: 0 0 10px var(--primary);
-            transform: translateX(-50%);
-            z-index: 1;
-        }
-
-        .note-node {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            position: relative;
-            margin-bottom: 80px;
-            perspective: 1200px;
-        }
-
-        .note-node::before {
-            content: "";
-            position: absolute;
-            top: 50%;
-            width: 50px;
-            height: 2px;
-            background: var(--circuit-line);
-            z-index: 0;
-        }
-
-        .note-node::after {
-            content: "";
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            width: 10px;
-            height: 10px;
-            background: #000;
-            border: 2px solid var(--primary);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 8px var(--primary);
-            z-index: 3;
-        }
-
-        .note-node.side-left { justify-content: flex-start; }
-        .note-node.side-right { justify-content: flex-end; }
-
-        .note-node.side-left::before { left: 50%; transform: translateX(-100%); width: calc(45% - 10px); }
-        .note-node.side-right::before { right: 50%; transform: translateX(100%); width: calc(45% - 10px); }
-
-        /* Terminal Style Note Cards */
-        .terminal-card {
-            border: 1px solid var(--primary-dim); background: rgba(5, 0, 0, 0.98);
-            display: flex; flex-direction: column; transition: 0.4s;
-            cursor: pointer; position: relative;
-            width: 320px;
-            max-width: 90%;
-            z-index: 5;
-            box-shadow: 5px 5px 0px rgba(255, 0, 0, 0.05);
-        }
-
-        .terminal-card:hover { 
-            border-color: var(--primary); 
-            transform: scale(1.05); 
-            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3); 
-            z-index: 20;
-        }
-
-        .terminal-header {
-            height: 30px; background: #1a0000;
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 12px; font-size: 0.6rem; border-bottom: 1px solid var(--primary-dim);
-            letter-spacing: 1px; color: var(--primary);
-        }
-
-        .terminal-body { padding: 18px; flex: 1; position: relative; }
-        .terminal-body h3 { font-size: 1rem; margin-bottom: 8px; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
-        .terminal-body p { font-size: 0.75rem; color: #aa0000; line-height: 1.4; height: 44px; overflow: hidden; font-family: var(--font-terminal); }
-
-        .terminal-footer {
-            padding: 6px 12px; font-size: 0.5rem; border-top: 1px solid #1a0000;
-            color: var(--primary-dim); display: flex; justify-content: space-between;
-            background: #050000;
-        }
-
-        /* Investigative Modals */
+        /* Modals */
         .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.98); z-index: 10000;
+            background: rgba(5, 11, 13, 0.9); z-index: 10000;
             display: none; justify-content: center; align-items: center;
-            backdrop-filter: blur(25px); padding: 20px;
+            backdrop-filter: blur(8px);
         }
 
-        .modal {
-            background: #010000; border: 1px solid var(--primary);
-            max-width: 950px; width: 100%; position: relative;
-            box-shadow: 0 0 150px rgba(255, 0, 0, 0.4);
-            animation: modal-entry 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        .modal-window {
+            background: var(--bg-panel); border: 2px solid var(--accent);
+            max-width: 850px; width: 95%; position: relative;
         }
-
-        @keyframes modal-entry { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
         .modal-header {
-            padding: 20px 30px; background: #1a0000;
-            border-bottom: 1px solid var(--primary); display: flex;
-            justify-content: space-between; align-items: center;
-            font-size: 0.85rem; font-weight: bold; letter-spacing: 4px; color: var(--primary);
+            padding: 15px 25px; background: var(--accent); color: var(--bg-deep);
+            font-family: var(--font-mono); font-weight: bold;
+            display: flex; justify-content: space-between; align-items: center;
         }
 
-        .modal-body { padding: 45px; max-height: 85vh; overflow-y: auto; color: var(--primary); }
+        .modal-body { padding: 40px; }
 
-        .view-content-area {
-            font-family: var(--font-mono); font-size: 1.1rem; line-height: 1.8;
-            color: #ff3333; white-space: pre-wrap; margin-bottom: 40px;
-            padding: 35px; background: rgba(255, 0, 0, 0.05);
-            border: 1px solid var(--primary-dark);
-            box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.1);
+        .content-display {
+            background: rgba(0,0,0,0.4); border: 1px solid var(--border-color);
+            padding: 25px; border-radius: 4px; color: var(--text-bright);
+            font-family: var(--font-mono); line-height: 1.6;
+            margin-bottom: 30px; white-space: pre-wrap;
         }
 
-        .view-title-main {
-            margin-bottom: 25px; 
-            font-size: 3.2rem; 
-            text-transform: uppercase; 
-            color: var(--primary); 
-            letter-spacing: 4px;
-            border-left: 10px solid var(--primary);
-            padding-left: 20px;
-        }
-
-        /* Labels and Textures */
-        .investigative-label {
-            font-size: 0.75rem; color: var(--primary-dim); letter-spacing: 2px;
-            text-transform: uppercase; margin-bottom: 15px; display: block;
-        }
-
-        /* Buttons Aesthetic */
-        .btn-investigative {
-            min-width: 200px;
-            padding: 15px 30px;
-            font-size: 0.85rem;
-        }
-
-        .dash-clock {
-            font-family: var(--font-terminal);
-            font-size: 2.5rem;
-            color: var(--primary-dim);
-            letter-spacing: 4px;
-            border-left: 2px solid var(--primary-dark);
-            padding-left: 20px;
-        }
-
-        /* Visual Effects */
-        .glitch { animation: glitch-anim 6s infinite; }
-        @keyframes glitch-anim {
-            0%, 90% { transform: none; opacity: 1; }
-            92% { transform: skewX(10deg); opacity: 0.8; }
-            94% { transform: skewX(-10deg); opacity: 0.9; }
-            96% { transform: none; }
-        }
-
-        .loading-bar { width: 100%; height: 4px; background: var(--primary-dark); position: relative; overflow: hidden; }
-        .loading-bar::after {
-            content: ""; position: absolute; left: 0; height: 100%; width: 50%;
-            background: var(--primary); animation: loading-sweep 2s infinite linear;
-        }
-        @keyframes loading-sweep { 0% { left: -50%; } 100% { left: 100%; } }
-
-        .loading-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center;
-            background: #000; color: var(--primary); z-index: 2000;
+        /* Decorative Components */
+        .stat-badge {
+            display: inline-block; padding: 2px 8px;
+            background: var(--accent-dim); color: var(--accent);
+            font-family: var(--font-mono); font-size: 0.6rem; border-radius: 2px;
         }
 
         #logs {
-            position: fixed; bottom: 25px; left: 25px; font-size: 0.6rem;
-            color: var(--primary-dim); z-index: 100; max-width: 400px;
-            pointer-events: none; background: rgba(0,0,0,0.9); padding: 12px;
-            border: 1px solid var(--primary-dark);
+            position: fixed; bottom: 20px; left: 20px;
+            font-family: var(--font-mono); font-size: 0.6rem; color: var(--accent-dim);
+            max-width: 300px;
         }
 
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; background: var(--primary); box-shadow: 0 0 8px var(--primary); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-
-        /* Responsive */
         @media (max-width: 1000px) {
             #dashboard-view { grid-template-columns: 1fr; }
-            .dash-right-main::before { display: none; }
+            .dash-right-main { padding-top: 40px; }
         }
     </style>
 </head>
 <body>
-    <div id="loading-screen" class="loading-screen">
-        <div class="glitch" style="font-size: 2rem; letter-spacing: 10px; font-family: var(--font-terminal);">EVA-01_STARTUP...</div>
+    <div class="bg-grid"></div>
+    
+    <!-- Code Decorations -->
+    <div class="side-decoration">
+<pre>
+// MAGI_B01_STATUS
+[SYSTEM_INIT] ... OK
+[PRINTER_LINK] .. ONLINE
+[STOCK_SYNC] ... 98.4%
+
+def scan_grid():
+  for node in nodes:
+    if node.id == target:
+      return node.data
+  return null
+
+# FVWM_TERMINAL_V2
+Uptime: 14d 2h
+Shell: zsh
+Resolution: 2560x1440
+WM: MAGI-OS-BLUE
+</pre>
     </div>
 
-    <div class="bg-stripes"></div>
-    <div class="grid-bg"></div>
-    <div class="scanline"></div>
-    <div class="crt-vignette"></div>
-
     <div id="app">
-        <!-- Status Bar -->
-        <div class="top-bar">
-            <div>MAGI_SYSTEM // EVA-01_SECURE_LINK</div>
-            <div id="top-stats">SYNC: 99.8% | POWER: INTERNAL | STATUS: ACTIVE</div>
+        <div class="system-bar">
+            <div>MAGI_B01 // OPERATIONAL_UNIT</div>
+            <div>STATUS: <span style="color: #00ffaa;">STABLE</span></div>
             <div id="clock">00:00:00</div>
         </div>
 
         <div id="view-port" class="view-container">
             <!-- LOGIN -->
             <div id="login-view">
-                <div class="login-box">
-                    <div class="loading-bar" style="margin-bottom: 50px;"></div>
-                    <h1 class="glitch" style="font-size: 3rem; margin-bottom: 12px; text-align: center; letter-spacing: 8px; color: var(--primary);">NOVA REAL</h1>
-                    <p style="font-size: 0.75rem; text-align: center; color: var(--primary-dim); letter-spacing: 10px; margin-bottom: 50px; text-transform: uppercase;">Acesso Nível 1</p>
-                    
+                <div class="terminal-box">
+                    <h2 style="font-family: var(--font-mono); color: var(--accent); margin-bottom: 30px; letter-spacing: 4px;">SYSTEM_ACCESS</h2>
                     <form id="login-form">
                         <div class="field">
-                            <label>ID_PILOTO</label>
+                            <label>ID_OPERATOR</label>
                             <input type="email" id="login-email" value="deemo@gmail.com" required>
                         </div>
                         <div class="field">
-                            <label>CHAVE_DE_ATIVACAO</label>
-                            <input type="password" id="login-password" required placeholder="DIGITE A CHAVE">
+                            <label>SECURITY_KEY</label>
+                            <input type="password" id="login-password" required placeholder="********">
                         </div>
-                        <div id="login-error" style="display: none; color: #f00; font-size: 0.8rem; margin-bottom: 30px; text-align: center; border: 1px solid #700; padding: 15px; background: rgba(60,0,0,0.6);">[!] FALHA: ACESSO NEGADO</div>
-                        <button type="submit" class="btn">INICIAR CONEXAO NEURAL</button>
+                        <div id="login-error" style="display: none; color: #ff5555; font-size: 0.7rem; margin-bottom: 20px; font-family: var(--font-mono);">[!] ERR_AUTH_FAILED: ACCESS_DENIED</div>
+                        <button type="submit" class="btn">INITIALIZE_SESSION</button>
                     </form>
                 </div>
             </div>
 
             <!-- DASHBOARD -->
             <div id="dashboard-view">
-                <div class="dash-left-main">
-                    <div class="dash-title-group">
-                        <h1 class="glitch" style="font-size: 4rem; letter-spacing: 4px;">DASHBOARD-EVA01</h1>
+                <div class="dash-left-main" style="position: relative;">
+                    <div class="dash-header">
+                        <h1 class="dash-title">MAGI-B01</h1>
                         <div id="dash-realtime-clock" class="dash-clock">00:00:00</div>
                     </div>
                     
-                    <p id="user-display" style="font-size: 0.8rem; color: var(--primary-dim); margin-bottom: 30px; letter-spacing: 2px;"></p>
+                    <p id="user-display" style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-dim); margin-bottom: 30px;"></p>
 
-                    <div class="dash-actions-group">
-                        <button id="btn-add" class="btn btn-sm">NOVO_REGISTRO_COMMIT</button>
-                        <button id="btn-logout" class="btn btn-sm btn-danger">TERMINAL_DISCONNECT</button>
+                    <div style="display: flex; gap: 15px; margin-bottom: 40px;">
+                        <button id="btn-add" class="btn btn-sm">NEW_PROTOCOL</button>
+                        <button id="btn-logout" class="btn btn-sm btn-danger">TERMINATE_LINK</button>
                     </div>
 
-                    <div class="field" style="max-width: 100%; margin-bottom: 40px;">
-                        <label>SCANNER_DE_DADOS_GRID (CID/PROTOCOL)</label>
-                        <input type="text" id="search-input" placeholder="EXECUTAR BUSCA DE DADOS CRIPTOGRAFADOS...">
-                    </div>
-
-                    <div class="sys-panels-grid">
-                        <div class="sys-panel">
-                            <span style="color: var(--primary)">DADOS:</span> STABLE<br>
-                            <span style="color: var(--primary)">LINK:</span> ACTIVE<br>
-                            <span style="color: var(--primary)">SEC:</span> AES-256
-                        </div>
-                        <div class="sys-panel">
-                            <span style="color: var(--primary)">LATÊNCIA:</span> 12ms<br>
-                            <span style="color: var(--primary)">SINC:</span> <span id="sync-time">NOW</span>
-                        </div>
+                    <div class="field" style="margin-bottom: 50px;">
+                        <label>SEARCH_DATA_GRID</label>
+                        <input type="text" id="search-input" placeholder="Execute search command...">
                     </div>
 
                     <div id="notes-col-1" class="notes-column"></div>
@@ -470,29 +324,29 @@
 
     <!-- MODAL: EDITOR -->
     <div id="edit-modal" class="overlay">
-        <div class="modal">
+        <div class="modal-window">
             <div class="modal-header">
-                <span id="edit-modal-title">COMMIT_PROTOCOL_INTERFACE</span>
-                <span style="cursor: pointer; color: var(--primary);" onclick="closeModal('edit-modal')">[ CANCEL_X ]</span>
+                <span id="edit-modal-title">COMMIT_DATA_ENTRY</span>
+                <span style="cursor: pointer;" onclick="closeModal('edit-modal')">[ X ]</span>
             </div>
             <div class="modal-body">
                 <form id="note-form">
                     <input type="hidden" id="note-id">
                     <div class="field">
-                        <label>CID_TITLE (IDENTIFICADOR)</label>
-                        <input type="text" id="note-title" required placeholder="EX: OPERAÇÃO_DELTA_7">
+                        <label>IDENTIFIER_TAG</label>
+                        <input type="text" id="note-title" required placeholder="Boleto_Escaneamento_01">
                     </div>
                     <div class="field">
-                        <label>OPERATOR_TAG (ASSINATURA)</label>
+                        <label>OPERATOR_SIGNATURE</label>
                         <input type="text" id="note-author" value="Giancarlo" required>
                     </div>
                     <div class="field">
-                        <label>RAW_DATA_ENCRYPTED (JSON/PROTOCOLO/TEXTO)</label>
-                        <textarea id="note-content" style="height: 300px;" required placeholder="Insira protocolos, links, chaves e dados operacionais de investigação..."></textarea>
+                        <label>RAW_DATA_STREAM (INSTRUCTIONS/LINKS)</label>
+                        <textarea id="note-content" style="height: 250px;" required placeholder="Enter procedures or URLs..."></textarea>
                     </div>
-                    <div style="display: flex; gap: 20px;">
-                        <button type="button" class="btn btn-danger" onclick="closeModal('edit-modal')">ABORT_COMMIT</button>
-                        <button type="submit" class="btn">EFETIVAR_UPLOAD_COMMIT</button>
+                    <div style="display: flex; gap: 20px; justify-content: flex-end;">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="closeModal('edit-modal')">ABORT</button>
+                        <button type="submit" class="btn btn-sm">EXECUTE_COMMIT</button>
                     </div>
                 </form>
             </div>
@@ -501,21 +355,24 @@
 
     <!-- MODAL: VISUALIZAR -->
     <div id="view-modal" class="overlay">
-        <div class="modal">
+        <div class="modal-window" style="max-width: 900px;">
             <div class="modal-header">
-                <span id="view-header-tag">DECRYPTED_RECORD_ANALYSIS</span>
-                <span style="cursor: pointer; color: var(--primary);" onclick="closeModal('view-modal')">[ EXIT_X ]</span>
+                <span id="view-header-tag">RECORD_ANALYSIS_VIEW</span>
+                <span style="cursor: pointer;" onclick="closeModal('view-modal')">[ CLOSE ]</span>
             </div>
             <div class="modal-body">
-                <h2 id="view-title" class="glitch view-title-main"></h2>
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--primary-dim); margin-bottom: 40px; border-bottom: 1px solid var(--primary-dark); padding-bottom: 20px; letter-spacing: 2px;">
+                <div style="margin-bottom: 25px; text-align: right;">
+                    <span class="stat-badge">PROTOCOL_ID: <span id="view-id-display"></span></span>
+                </div>
+                <h2 id="view-title" style="font-family: var(--font-mono); font-size: 2.2rem; margin-bottom: 15px; color: var(--accent);"></h2>
+                <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent-dim); margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
                     <span id="view-author"></span>
                     <span id="view-date"></span>
                 </div>
-                <div id="view-content" class="view-content-area"></div>
-                <div style="display: flex; gap: 25px; justify-content: flex-end;">
-                    <button id="btn-view-delete" class="btn btn-sm btn-danger btn-investigative">WIPE_FROM_GRID</button>
-                    <button id="btn-view-edit" class="btn btn-sm btn-investigative">RE-COMMIT_DATA</button>
+                <div id="view-content" class="content-display"></div>
+                <div style="display: flex; gap: 20px; justify-content: flex-end;">
+                    <button id="btn-view-delete" class="btn btn-sm btn-danger">WIPE_DATA</button>
+                    <button id="btn-view-edit" class="btn btn-sm">MODIFY_RECORD</button>
                 </div>
             </div>
         </div>
@@ -523,18 +380,15 @@
 
     <!-- MODAL: DELETE -->
     <div id="delete-modal" class="overlay">
-        <div class="modal" style="max-width: 550px; border-color: #f00;">
-            <div class="modal-header" style="background: #400;">
-                <span>DESTRUCTION_SEQUENCE_WARNING</span>
+        <div class="modal-window" style="max-width: 450px; border-color: #ff5555;">
+            <div class="modal-header" style="background: #662222; color: #ff5555;">
+                <span>DESTRUCTION_WARNING</span>
             </div>
             <div class="modal-body" style="text-align: center;">
-                <p style="margin-bottom: 45px; font-size: 1.2rem; line-height: 1.8; font-family: var(--font-terminal); color: #f44;">
-                    ESTE REGISTRO SERÁ PERMANENTEMENTE EXPURGADO DO BANCO CENTRAL DE DADOS.<br><br>
-                    CONFIRMAR EXECUÇÃO DA SEQUÊNCIA DE DESTRUIÇÃO?
-                </p>
-                <div style="display: flex; gap: 20px;">
-                    <button class="btn btn-sm" style="flex: 1;" onclick="closeModal('delete-modal')">ABORT_WIPE</button>
-                    <button id="btn-confirm-delete" class="btn btn-sm btn-danger" style="flex: 1;">EXECUTE_WIPE_PERMANENT</button>
+                <p style="margin-bottom: 30px; font-family: var(--font-mono); color: var(--text-main);">Confirm permanent data wipe?</p>
+                <div style="display: flex; gap: 15px;">
+                    <button class="btn btn-sm" style="flex: 1;" onclick="closeModal('delete-modal')">CANCEL</button>
+                    <button id="btn-confirm-delete" class="btn btn-sm btn-danger" style="flex: 1;">EXECUTE_WIPE</button>
                 </div>
             </div>
         </div>
@@ -582,40 +436,30 @@
             const div = document.createElement('div');
             div.innerText = `> ${msg}`;
             logs.prepend(div);
-            if (logs.children.length > 12) logs.lastChild.remove();
+            if (logs.children.length > 8) logs.lastChild.remove();
         }
 
         setInterval(() => {
-            const now = new Date().toLocaleTimeString();
+            const now = new Date().toLocaleTimeString('pt-BR');
             const clockEl = document.getElementById('clock');
             if(clockEl) clockEl.innerText = now;
-
             const dashClockEl = document.getElementById('dash-realtime-clock');
             if(dashClockEl) dashClockEl.innerText = now;
-            
-            const statsEl = document.getElementById('top-stats');
-            if (statsEl && Math.random() > 0.85) {
-                const cpu = Math.floor(Math.random() * 30) + 10;
-                statsEl.innerText = `SYNC: ${99 + Math.random().toFixed(1)}% | POWER: INTERNAL | CPU: ${cpu}%`;
-            }
         }, 1000);
 
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
-            const loadingScreen = document.getElementById('loading-screen');
-            if(loadingScreen) loadingScreen.style.display = 'none';
-            
             if (user) {
                 hide('login-view');
                 show('dashboard-view', true);
                 const userDisplay = document.getElementById('user-display');
-                if(userDisplay) userDisplay.innerText = `PILOTO_ID: ${user.email.toUpperCase()} // SYNC_STATUS: ESTÁVEL_EVA-01`;
+                if(userDisplay) userDisplay.innerText = `OPERATOR_ID: ${user.email.split('@')[0].toUpperCase()} // SESS_STABLE`;
                 initDashboard();
-                sysLog("SESSÃO_INICIADA: CONEXÃO NEURAL ATIVA");
+                sysLog("MAGI_B01: CONNECTION_ESTABLISHED");
             } else {
                 show('login-view');
                 hide('dashboard-view');
-                sysLog("SISTEMA_AGUARDANDO_AUTENTICAÇÃO_NÍVEL_3");
+                sysLog("MAGI_B01: WAITING_FOR_AUTH");
             }
         });
 
@@ -628,12 +472,12 @@
             } catch (err) {
                 const errEl = document.getElementById('login-error');
                 if(errEl) errEl.style.display = 'block';
-                sysLog("FALHA_CONEXÃO: CHAVE DE SEGURANÇA INVÁLIDA");
+                sysLog("ERROR: AUTH_REJECTED");
             }
         });
 
         document.getElementById('btn-logout').addEventListener('click', () => {
-            sysLog("TERMINANDO CONEXÃO NEURAL... EXPURGANDO SESSÃO.");
+            sysLog("LINK_TERMINATED");
             signOut(auth);
         });
 
@@ -644,8 +488,6 @@
                 notes = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
                 notes.sort((a, b) => b.updatedAt - a.updatedAt);
                 renderNotes();
-                const syncTimeEl = document.getElementById('sync-time');
-                if(syncTimeEl) syncTimeEl.innerText = new Date().toLocaleTimeString();
             });
         }
 
@@ -654,8 +496,7 @@
             const term = searchInput ? searchInput.value.toLowerCase() : '';
             const filtered = notes.filter(n => 
                 n.title.toLowerCase().includes(term) || 
-                n.content.toLowerCase().includes(term) ||
-                n.author.toLowerCase().includes(term)
+                n.content.toLowerCase().includes(term)
             );
             
             const col1 = document.getElementById('notes-col-1');
@@ -666,44 +507,33 @@
             col2.innerHTML = '';
 
             if (filtered.length === 0) {
-                col1.innerHTML = '<p style="color: var(--primary-dark); letter-spacing: 5px; font-family: var(--font-terminal);">SEM_DADOS_GRID_DETECTADOS</p>';
+                col1.innerHTML = '<p style="color: var(--accent-dim); font-family: var(--font-mono);">[ NO_DATA_DETECTED ]</p>';
                 return;
             }
 
             filtered.forEach((note, index) => {
-                const isEven = index % 2 === 0;
-                const side = (Math.floor(index / 2) % 2 === 0) ? 'side-left' : 'side-right';
-                
                 const html = `
-                    <div class="note-node ${side}">
-                        <div class="terminal-card" onclick="viewNote('${note.id}')">
-                            <div class="terminal-header">
-                                <span>IDENT: ${note.id.slice(0,10).toUpperCase()}</span>
-                                <div style="display: flex; gap: 8px;">
-                                    <span class="status-dot"></span>
-                                    <span onclick="event.stopPropagation(); editNote('${note.id}')" style="cursor: pointer; color: var(--primary); font-weight: bold;">[MOD]</span>
-                                    <span onclick="event.stopPropagation(); requestDelete('${note.id}')" style="cursor: pointer; color: #800;">[WIP]</span>
-                                </div>
-                            </div>
-                            <div class="terminal-body">
-                                <h3>${note.title}</h3>
-                                <p>${note.content}</p>
-                            </div>
-                            <div class="terminal-footer">
-                                <span>OP: ${note.author.toUpperCase()}</span>
-                                <span>MOD: ${new Date(note.updatedAt).toLocaleDateString()}</span>
-                            </div>
+                    <div class="note-window" onclick="viewNote('${note.id}')">
+                        <div class="window-header">
+                            <span>IDENT: ${note.id.slice(0,10).toUpperCase()}</span>
+                            <span>[ RE-VIEW ]</span>
+                        </div>
+                        <div class="window-body">
+                            <h3>${note.title}</h3>
+                            <p>${note.content}</p>
+                        </div>
+                        <div class="window-footer">
+                            <span>SIG: ${note.author.toUpperCase()}</span>
+                            <span>UPD: ${new Date(note.updatedAt).toLocaleDateString()}</span>
                         </div>
                     </div>
                 `;
-
-                if (isEven) col1.innerHTML += html;
+                if (index % 2 === 0) col1.innerHTML += html;
                 else col2.innerHTML += html;
             });
         }
 
-        const searchInputEl = document.getElementById('search-input');
-        if(searchInputEl) searchInputEl.addEventListener('input', renderNotes);
+        document.getElementById('search-input').addEventListener('input', renderNotes);
 
         window.viewNote = (id) => {
             const note = notes.find(n => n.id === id);
@@ -711,11 +541,11 @@
             currentViewingId = id;
             document.getElementById('view-title').innerText = note.title;
             document.getElementById('view-content').innerText = note.content;
-            document.getElementById('view-author').innerText = `ANALISTA_RESPONSÁVEL: ${note.author.toUpperCase()}`;
-            document.getElementById('view-date').innerText = `SINCRONIZADO_ESTAÇÃO: ${new Date(note.updatedAt).toLocaleString()}`;
-            document.getElementById('view-header-tag').innerText = `CID_ANALYSIS_VIEW: ${id.toUpperCase()}`;
+            document.getElementById('view-author').innerText = `ASSINATURA: ${note.author}`;
+            document.getElementById('view-date').innerText = `ÚLTIMA_SINCRONIA: ${new Date(note.updatedAt).toLocaleString()}`;
+            document.getElementById('view-id-display').innerText = id.toUpperCase();
             show('view-modal', true);
-            sysLog(`ANÁLISE_DADOS: ACESSANDO_CID_${id.slice(0,6)}`);
+            sysLog(`ACCESSING_RECORD: ${id.slice(0,6)}`);
         };
 
         window.editNote = (id) => {
@@ -725,7 +555,7 @@
             document.getElementById('note-title').value = note.title;
             document.getElementById('note-author').value = note.author;
             document.getElementById('note-content').value = note.content;
-            document.getElementById('edit-modal-title').innerText = 'MODIFICAR_PROTOCOLO_SISTEMA';
+            document.getElementById('edit-modal-title').innerText = 'RECONFIG_PROTOCOL_DATA';
             show('edit-modal', true);
             hide('view-modal');
         };
@@ -738,18 +568,16 @@
         document.getElementById('btn-confirm-delete').addEventListener('click', async () => {
             if (noteToDeleteId) {
                 await remove(ref(db, `notes/${currentUser.uid}/${noteToDeleteId}`));
-                sysLog(`PROTOCOLO_WIPED: CID_${noteToDeleteId.slice(0,6)}`);
                 hide('delete-modal');
                 hide('view-modal');
-                noteToDeleteId = null;
+                sysLog("DATA_PURGED_SUCCESSFULLY");
             }
         });
 
         document.getElementById('btn-add').addEventListener('click', () => {
             document.getElementById('note-form').reset();
             document.getElementById('note-id').value = '';
-            document.getElementById('note-author').value = 'Giancarlo';
-            document.getElementById('edit-modal-title').innerText = 'INICIAR_NOVO_COMMIT_PROTOCOLO';
+            document.getElementById('edit-modal-title').innerText = 'INITIALIZE_NEW_COMMIT';
             show('edit-modal', true);
         });
 
@@ -765,11 +593,11 @@
 
             if (id) {
                 await update(ref(db, `notes/${currentUser.uid}/${id}`), noteData);
-                sysLog("BANCO_DE_DADOS_ATUALIZADO: COMMIT_OK");
+                sysLog("COMMIT_UPDATED");
             } else {
                 const newRef = push(ref(db, `notes/${currentUser.uid}`));
                 await set(newRef, noteData);
-                sysLog("NOVO_REGISTRO_ENVIADO: COMMIT_SUCCESS");
+                sysLog("COMMIT_UPLOADED");
             }
             hide('edit-modal');
         });
