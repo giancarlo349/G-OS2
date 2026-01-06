@@ -334,18 +334,38 @@
             margin-bottom: 30px; white-space: pre-wrap;
             font-size: 1.05rem; border-left: 4px solid var(--accent);
         }
-        .content-display div, .content-display span, .preview-expanded div, .preview-expanded span { font-family: var(--font-mono); }
 
-        #logs {
+        /* Terminal Area */
+        #logs-container {
             position: fixed; bottom: 20px; left: 20px;
+            width: 400px;
+            z-index: 1000;
+        }
+        #logs {
             font-family: var(--font-mono); font-size: 0.65rem; color: var(--accent-dim);
-            max-width: 400px; pointer-events: none;
+            pointer-events: none;
+            margin-bottom: 5px;
+        }
+        #terminal-prompt {
+            display: flex; align-items: center;
+            background: rgba(0,0,0,0.8);
+            border: 1px solid var(--accent-dim);
+            padding: 4px 8px;
+        }
+        #terminal-prompt span {
+            color: var(--accent); font-family: var(--font-mono); font-size: 0.7rem; margin-right: 8px;
+        }
+        #terminal-input {
+            background: transparent; border: none; color: var(--accent);
+            font-family: var(--font-mono); font-size: 0.7rem; width: 100%;
+            outline: none;
         }
 
         @media (max-width: 800px) {
             .notes-grid { grid-template-columns: 1fr; }
             .span-2-col, .span-big { grid-column: span 1; }
             .dash-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            #logs-container { width: 90%; }
         }
     </style>
 </head>
@@ -357,7 +377,7 @@
     <div id="app">
         <div class="system-bar">
             <div>EVA-G.V1 // MAGI_SYSTEM_CORE</div>
-            <div id="status-display">SYNC_RATE: <span style="color: #00ffaa;">41.3% (STABLE)</span> // NODES: <span id="node-count">0</span></div>
+            <div id="status-display">SYNC: <span style="color: #00ffaa;">41.3%</span> // ENV: <span id="active-env-display" style="color:white">GEOFRONT</span> // NODES: <span id="node-count">0</span></div>
             <div id="clock">00:00:00</div>
         </div>
 
@@ -523,12 +543,18 @@
         </div>
     </div>
 
-    <div id="logs"></div>
+    <div id="logs-container">
+        <div id="logs"></div>
+        <div id="terminal-prompt">
+            <span>NERV_CMD></span>
+            <input type="text" id="terminal-input" placeholder="Command...">
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, push, set, remove, update, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCQTr3D2G5CKO5FA4h3-SrAfBKL27zqhrQ",
@@ -550,8 +576,9 @@
         let activeTagFilter = null;
         let currentViewingId = null;
         let draggedId = null;
+        let activeEnvironment = localStorage.getItem('eva_env') || 'GEOFRONT';
 
-        // Rich Editor Function
+        // Rich Editor
         window.formatDoc = (cmd, val) => {
             document.execCommand(cmd, false, val);
         };
@@ -570,11 +597,13 @@
 
         const show = (id) => { 
             const el = document.getElementById(id);
+            if (!el) return;
             el.style.display = 'flex';
             setTimeout(() => el.style.opacity = '1', 10);
         };
         const hide = (id) => { 
             const el = document.getElementById(id);
+            if (!el) return;
             el.style.opacity = '0';
             setTimeout(() => el.style.display = 'none', 300);
         };
@@ -586,7 +615,7 @@
             div.innerText = `> [${new Date().toLocaleTimeString()}] ${msg}`;
             div.style.animation = 'fadeIn 0.3s ease-out';
             logs.prepend(div);
-            if (logs.children.length > 7) logs.lastChild.remove();
+            if (logs.children.length > 8) logs.lastChild.remove();
         }
 
         setInterval(() => {
@@ -603,6 +632,8 @@
                 document.getElementById('user-display').innerText = `OPERATOR: ${user.email.split('@')[0].toUpperCase()} // MAGI_AUTH: BALTHASAR_ACCEPTED`;
                 initData();
                 sysLog("LINK_STABLE: NEURAL_CONNECT_STABLISHED");
+                sysLog(`ACTIVE_ENV: ${activeEnvironment.toUpperCase()}`);
+                updateEnvUI();
             } else {
                 show('login-view');
                 document.getElementById('dashboard-view').style.display = 'none';
@@ -624,8 +655,14 @@
 
         document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
+        function updateEnvUI() {
+            document.getElementById('active-env-display').innerText = activeEnvironment.toUpperCase();
+        }
+
         function initData() {
-            onValue(ref(db, `items/${currentUser.uid}`), (snapshot) => {
+            if (!currentUser) return;
+            const itemRef = ref(db, `items/${currentUser.uid}/${activeEnvironment}`);
+            onValue(itemRef, (snapshot) => {
                 const data = snapshot.val();
                 allItems = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
                 allItems.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -633,7 +670,8 @@
                 renderDashboard();
             });
 
-            onValue(ref(db, `tags/${currentUser.uid}`), (snapshot) => {
+            const tagRef = ref(db, `tags/${currentUser.uid}/${activeEnvironment}`);
+            onValue(tagRef, (snapshot) => {
                 const data = snapshot.val();
                 allTags = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
                 renderTagsBar();
@@ -659,7 +697,6 @@
             const grid = document.getElementById('notes-grid');
             grid.innerHTML = '';
 
-            // Recursive search: If a child matches, its parent should be included.
             const matchedIds = new Set();
             allItems.forEach(item => {
                 const titleMatch = item.title.toLowerCase().includes(search);
@@ -668,7 +705,6 @@
                 
                 if ((titleMatch || contentMatch) && tagMatch) {
                     matchedIds.add(item.id);
-                    // Add all ancestors to matchedIds to ensure the tree path is visible
                     let current = item;
                     while (current.parentId) {
                         matchedIds.add(current.parentId);
@@ -678,21 +714,13 @@
                 }
             });
 
-            // If search is empty and no tag filter, show all root items
-            let itemsToRender;
-            if (!search && !activeTagFilter) {
-                itemsToRender = allItems;
-            } else {
-                itemsToRender = allItems.filter(i => matchedIds.has(i.id));
-            }
-
+            let itemsToRender = (search || activeTagFilter) ? allItems.filter(i => matchedIds.has(i.id)) : allItems;
             const rootItems = itemsToRender.filter(i => !i.parentId);
             rootItems.forEach(item => grid.appendChild(createItemElement(item, itemsToRender)));
         }
 
         function createItemElement(item, allFiltered) {
             const div = document.createElement('div');
-            
             const complexity = (item.title.length + (item.content?.length || 0));
             let spanClass = '';
             if (item.type === 'group' || complexity > 250) spanClass = 'span-big';
@@ -703,9 +731,7 @@
             div.dataset.id = item.id;
             
             const tagsHtml = (item.tags || []).map(t => `<span class="tag-pill" style="padding:1px 6px; font-size:0.55rem; margin-right:4px;">${t}</span>`).join('');
-            
-            // Limit preview content for card preview
-            const plainTextPreview = (item.content || '').replace(/<[^>]*>?/gm, '').slice(0, 180);
+            const plainTextPreview = (item.content || '').replace(/<[^>]*>?/gm, '').slice(0, 150);
 
             div.innerHTML = `
                 <div class="scanning-indicator"></div>
@@ -718,9 +744,9 @@
                     <h3>${item.title}</h3>
                     <p>${item.type === 'group' ? '[ CLASSIFIED_SECTOR ]' : plainTextPreview + '...'}</p>
                     <div class="preview-expanded">
-                        ${item.type === 'note' ? item.content : '[ SECTOR_FILE_DIRECTORY_LOCKED ]'}
+                        <div style="padding-bottom:10px;">${item.type === 'note' ? item.content : '[ SECTOR_FILE_DIRECTORY_LOCKED ]'}</div>
                     </div>
-                    <div style="margin-top:15px;">${tagsHtml}</div>
+                    <div style="margin-top:10px;">${tagsHtml}</div>
                 </div>
                 ${item.type === 'group' ? `<div class="nested-container" data-parent-id="${item.id}"></div>` : ''}
                 <div class="window-footer">
@@ -757,25 +783,21 @@
         }
 
         async function handleDataSwap(idA, idB) {
+            if (!currentUser) return;
             const itemA = allItems.find(i => i.id === idA);
             const itemB = allItems.find(i => i.id === idB);
             if (!itemA || !itemB) return;
-
             const updates = {};
-            const orderA = itemA.order || Date.now();
-            const orderB = itemB.order || Date.now();
-
-            updates[`items/${currentUser.uid}/${idA}/order`] = orderB;
-            updates[`items/${currentUser.uid}/${idB}/order`] = orderA;
-            updates[`items/${currentUser.uid}/${idA}/parentId`] = itemB.parentId || null;
-
+            updates[`items/${currentUser.uid}/${activeEnvironment}/${idA}/order`] = itemB.order || Date.now();
+            updates[`items/${currentUser.uid}/${activeEnvironment}/${idB}/order`] = itemA.order || Date.now();
+            updates[`items/${currentUser.uid}/${activeEnvironment}/${idA}/parentId`] = itemB.parentId || null;
             await update(ref(db), updates);
         }
 
         async function moveToGroup(childId, groupId) {
-            if (childId === groupId) return;
+            if (!currentUser || childId === groupId) return;
             sysLog(`OPS: RECLASSIFYING_NODE_${childId.slice(0,4)}`);
-            await update(ref(db, `items/${currentUser.uid}/${childId}`), { parentId: groupId, updatedAt: Date.now() });
+            await update(ref(db, `items/${currentUser.uid}/${activeEnvironment}/${childId}`), { parentId: groupId, updatedAt: Date.now() });
         }
 
         document.getElementById('btn-add').addEventListener('click', () => { resetForm(); document.getElementById('note-type').value = 'note'; show('edit-modal'); });
@@ -790,10 +812,10 @@
 
         document.getElementById('note-form').addEventListener('submit', async e => {
             e.preventDefault();
+            if (!currentUser) return;
             const id = document.getElementById('note-id').value;
             const type = document.getElementById('note-type').value;
             const tags = document.getElementById('note-tags').value.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
-            
             const payload = {
                 title: document.getElementById('note-title').value,
                 type: type,
@@ -802,14 +824,11 @@
                 updatedAt: Date.now(),
                 order: id ? allItems.find(i => i.id === id).order : Date.now()
             };
-
-            tags.forEach(t => { if (!allTags.find(gt => gt.name === t)) push(ref(db, `tags/${currentUser.uid}`), { name: t }); });
-
-            if (id) await update(ref(db, `items/${currentUser.uid}/${id}`), payload);
-            else push(ref(db, `items/${currentUser.uid}`), { ...payload, parentId: null });
-            
+            tags.forEach(t => { if (!allTags.find(gt => gt.name === t)) push(ref(db, `tags/${currentUser.uid}/${activeEnvironment}`), { name: t }); });
+            if (id) await update(ref(db, `items/${currentUser.uid}/${activeEnvironment}/${id}`), payload);
+            else push(ref(db, `items/${currentUser.uid}/${activeEnvironment}`), { ...payload, parentId: null });
             hide('edit-modal');
-            sysLog("LINK_STABLE: COMMIT_COMMITTED_TO_MAGI");
+            sysLog("COMMIT_OK: DATA_SYNCED_MAGI");
         });
 
         window.viewNote = (id) => {
@@ -827,6 +846,7 @@
 
         document.getElementById('btn-view-edit').addEventListener('click', () => {
             const item = allItems.find(i => i.id === currentViewingId);
+            if (!item) return;
             document.getElementById('note-id').value = item.id;
             document.getElementById('note-type').value = item.type;
             document.getElementById('note-title').value = item.title;
@@ -836,46 +856,143 @@
             hide('view-modal'); show('edit-modal');
         });
 
-        document.getElementById('btn-view-delete-trigger').addEventListener('click', () => {
-            show('confirm-delete-modal');
-        });
+        document.getElementById('btn-view-delete-trigger').addEventListener('click', () => { show('confirm-delete-modal'); });
 
         document.getElementById('btn-view-delete-final').addEventListener('click', async () => {
-            if (currentViewingId) {
+            if (currentUser && currentViewingId) {
                 const children = allItems.filter(i => i.parentId === currentViewingId);
-                children.forEach(c => update(ref(db, `items/${currentUser.uid}/${c.id}`), { parentId: null }));
-                await remove(ref(db, `items/${currentUser.uid}/${currentViewingId}`));
-                hide('confirm-delete-modal');
-                hide('view-modal');
+                children.forEach(c => update(ref(db, `items/${currentUser.uid}/${activeEnvironment}/${c.id}`), { parentId: null }));
+                await remove(ref(db, `items/${currentUser.uid}/${activeEnvironment}/${currentViewingId}`));
+                hide('confirm-delete-modal'); hide('view-modal');
                 sysLog("PURGE_COMPLETE: NODE_EXPUNGED");
             }
         });
 
         document.getElementById('btn-manage-tags').addEventListener('click', () => {
+            if (!currentUser) return;
             const list = document.getElementById('tags-list-manager');
             list.innerHTML = '';
             allTags.forEach(t => {
                 const row = document.createElement('div');
                 row.style.cssText = 'display:flex; justify-content:space-between; margin-bottom:10px; padding:8px; border-bottom:1px solid #1f4d4d';
-                row.innerHTML = `<span style="font-family:var(--font-mono); font-size:0.8rem;">${t.name}</span> <button class="btn btn-sm btn-danger" onclick="deleteTag('${t.id}')">UNREGISTER</button>`;
+                row.innerHTML = `<span>${t.name}</span> <button class="btn btn-sm btn-danger" onclick="deleteTag('${t.id}')">UNREGISTER</button>`;
                 list.appendChild(row);
             });
             show('tag-modal');
         });
 
         window.deleteTag = async (tid) => {
-            await remove(ref(db, `tags/${currentUser.uid}/${tid}`));
+            if (!currentUser) return;
+            await remove(ref(db, `tags/${currentUser.uid}/${activeEnvironment}/${tid}`));
             hide('tag-modal');
-            sysLog("OPS: TAG_UNREGISTERED");
+            sysLog("TAG_UNREGISTERED");
         };
 
         document.getElementById('btn-save-tag').addEventListener('click', async () => {
+            if (!currentUser) return;
             const name = document.getElementById('new-tag-input').value.trim().toLowerCase();
             if (name && !allTags.find(t => t.name === name)) {
-                await push(ref(db, `tags/${currentUser.uid}`), { name });
+                await push(ref(db, `tags/${currentUser.uid}/${activeEnvironment}`), { name });
                 document.getElementById('new-tag-input').value = '';
                 hide('tag-modal');
-                sysLog("OPS: PATTERN_REGISTERED");
+                sysLog("PATTERN_REGISTERED");
+            }
+        });
+
+        // Terminal Logic
+        const terminalInput = document.getElementById('terminal-input');
+        terminalInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const cmdLine = terminalInput.value.trim();
+                terminalInput.value = '';
+                if (!cmdLine) return;
+                
+                const parts = cmdLine.split(' ');
+                const cmd = parts[0].toLowerCase();
+                const arg = parts[1];
+                const arg2 = parts[2];
+
+                // Global commands
+                if (cmd === 'clear') {
+                    document.getElementById('logs').innerHTML = '';
+                    return;
+                }
+
+                // Auth required for these commands
+                if (!currentUser) {
+                    sysLog("ERR: UNAUTHORIZED_ACCESS. PLEASE_LOG_IN.");
+                    return;
+                }
+
+                if (cmd === 'create' && arg) {
+                    const targetEnv = arg.toLowerCase();
+                    sysLog(`CMD_CREATE: INITIALIZING_${targetEnv.toUpperCase()}_PROTOCOL...`);
+                    // Just creates an entry by pushing a system dummy node if it doesn't exist
+                    const envRef = ref(db, `items/${currentUser.uid}/${targetEnv}`);
+                    const snap = await get(envRef);
+                    if (!snap.exists()) {
+                        await push(envRef, { 
+                            title: `ENV_INITIALIZED: ${targetEnv.toUpperCase()}`, 
+                            type: 'note', 
+                            content: 'SYSTEM_READY', 
+                            updatedAt: Date.now(), 
+                            parentId: null, 
+                            order: 0 
+                        });
+                        sysLog(`ENV_INIT: ${targetEnv.toUpperCase()} CREATED. USE 'transfer ${targetEnv}' TO SYNC.`);
+                    } else {
+                        sysLog(`ERR: ENV_${targetEnv.toUpperCase()}_ALREADY_EXISTS.`);
+                    }
+                } else if (cmd === 'transfer' && arg) {
+                    const targetEnv = arg.toLowerCase();
+                    sysLog(`CMD_TRANSFER: ATTEMPTING_NEURAL_LINK_${targetEnv.toUpperCase()}...`);
+                    
+                    const envRef = ref(db, `items/${currentUser.uid}/${targetEnv}`);
+                    const snapshot = await get(envRef);
+                    
+                    if (snapshot.exists()) {
+                        activeEnvironment = targetEnv;
+                        localStorage.setItem('eva_env', activeEnvironment);
+                        updateEnvUI();
+                        initData();
+                        sysLog(`LINK_ESTABLISHED: SYNCING_WITH_${activeEnvironment.toUpperCase()}`);
+                    } else {
+                        sysLog(`ERR: ENV_${targetEnv.toUpperCase()}_NOT_FOUND. ACCESS_DENIED.`);
+                    }
+                } else if ((cmd === 'list' || cmd === 'ls')) {
+                    sysLog("CMD_LIST: QUERYING_MAGI_ENVIRONMENTS...");
+                    const userRef = ref(db, `items/${currentUser.uid}`);
+                    try {
+                        const snapshot = await get(userRef);
+                        const val = snapshot.val();
+                        if (val) {
+                            const envs = Object.keys(val).map(e => e.toUpperCase()).join(', ');
+                            sysLog(`ENV_REGISTRY: ${envs}`);
+                        } else {
+                            sysLog("ENV_REGISTRY: NO_ADDITIONAL_ENVIRONMENTS_FOUND");
+                        }
+                    } catch (err) {
+                        sysLog("ERR: MAGI_DATABASE_LINK_FAILURE");
+                    }
+                } else if (cmd === 'delete' && arg && arg2) {
+                    if (arg2 === 'eva01') {
+                        sysLog(`CMD_PURGE_ENV: ${arg.toUpperCase()}`);
+                        await remove(ref(db, `items/${currentUser.uid}/${arg.toLowerCase()}`));
+                        await remove(ref(db, `tags/${currentUser.uid}/${arg.toLowerCase()}`));
+                        if (activeEnvironment === arg.toLowerCase()) {
+                            activeEnvironment = 'GEOFRONT';
+                            localStorage.setItem('eva_env', activeEnvironment);
+                            updateEnvUI();
+                            initData();
+                        }
+                        sysLog(`ENV_EXPUNGED: ${arg.toUpperCase()}`);
+                    } else {
+                        sysLog("ERR: INVALID_OVERRIDE_KEY. USE 'eva01'.");
+                        sysLog("USAGE: delete [env_name] eva01");
+                    }
+                } else {
+                    sysLog("ERR: CMD_UNRECOGNIZED_PROTOCOL");
+                }
             }
         });
 
