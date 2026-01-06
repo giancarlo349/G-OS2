@@ -80,6 +80,11 @@
             to { opacity: 1; transform: scale(1); }
         }
 
+        @keyframes scanningLine {
+            0% { left: -10%; }
+            100% { left: 110%; }
+        }
+
         #app {
             height: 100%; width: 100%;
             display: flex; flex-direction: column;
@@ -142,14 +147,35 @@
         .btn-danger { color: #ff5555; border-color: #662222; }
         .btn-danger:hover { background: #ff5555; color: white; border-color: #ff5555; box-shadow: 0 0 15px #ff5555; }
 
-        input, textarea {
+        input, textarea, .rich-editor {
             width: 100%; background: rgba(0,0,0,0.5); 
             border: 1px solid var(--border-color);
             color: var(--text-bright); padding: 12px; 
             font-family: var(--font-mono); font-size: 0.95rem;
             outline: none; transition: 0.3s;
         }
-        input:focus, textarea:focus { border-color: var(--accent); background: rgba(51, 204, 204, 0.08); }
+        input:focus, textarea:focus, .rich-editor:focus { border-color: var(--accent); background: rgba(51, 204, 204, 0.08); }
+
+        /* Rich Editor Tool Bar */
+        .editor-toolbar {
+            display: flex; gap: 5px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-bottom: none;
+            padding: 5px;
+            flex-wrap: wrap;
+        }
+        .editor-toolbar button, .editor-toolbar select {
+            background: transparent; border: 1px solid var(--accent-dim);
+            color: var(--accent); padding: 4px 8px;
+            font-family: var(--font-mono); font-size: 0.65rem;
+            cursor: pointer;
+        }
+        .editor-toolbar button:hover { background: var(--accent-dim); color: white; }
+        .rich-editor {
+            min-height: 300px;
+            overflow-y: auto;
+        }
 
         /* Dashboard Components */
         .dash-header {
@@ -162,7 +188,7 @@
             margin-bottom: 25px; flex-wrap: wrap;
         }
 
-        /* Fixed Notes Grid */
+        /* Notes Grid */
         .notes-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -180,10 +206,11 @@
             cursor: grab;
             display: flex; flex-direction: column;
             animation: fadeIn 0.4s var(--transition);
+            position: relative;
+            overflow: hidden;
         }
         .note-window:hover { border-color: var(--accent); box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
         
-        /* Spans for asymmetry */
         .span-2-col { grid-column: span 2; }
         .span-2-row { grid-row: span 2; }
         .span-big { grid-column: span 2; grid-row: span 2; }
@@ -196,11 +223,56 @@
             padding: 6px 12px; font-family: var(--font-mono);
             font-size: 0.65rem; display: flex; justify-content: space-between;
             pointer-events: none;
+            z-index: 2;
         }
 
-        .window-body { padding: 20px; flex: 1; pointer-events: none; }
-        .window-body h3 { font-size: 1.1rem; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .window-body { padding: 20px; flex: 1; pointer-events: none; z-index: 1; transition: max-height 0.4s var(--transition); }
+        .window-body h3 { font-size: 1.1rem; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; position: relative; }
         .window-body p { font-size: 0.9rem; line-height: 1.5; color: var(--text-main); }
+        .preview-expanded { 
+            max-height: 0; 
+            overflow: hidden; 
+            transition: max-height 0.5s var(--transition), opacity 0.5s var(--transition);
+            opacity: 0;
+            font-size: 0.8rem;
+            color: var(--text-bright);
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--accent-dim);
+        }
+
+        /* Scanning Line */
+        .scanning-indicator {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--accent);
+            display: none;
+            z-index: 10;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .note-window:hover .scanning-indicator {
+            display: block;
+            animation: scanningLine 0.8s linear infinite;
+        }
+        
+        /* Loading Status Text */
+        .scanning-text {
+            position: absolute;
+            top: 30px;
+            right: 15px;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--accent);
+            display: none;
+        }
+        .note-window:hover .scanning-text { display: block; }
+
+        /* Expand body on hover */
+        .note-window:hover .preview-expanded {
+            max-height: 500px;
+            opacity: 1;
+        }
 
         .nested-container {
             margin: 10px; padding: 15px;
@@ -215,6 +287,7 @@
             font-size: 0.6rem; color: var(--accent-dim);
             border-top: 1px solid rgba(51, 204, 204, 0.05);
             display: flex; justify-content: space-between;
+            z-index: 2;
         }
 
         .tags-manager {
@@ -261,6 +334,7 @@
             margin-bottom: 30px; white-space: pre-wrap;
             font-size: 1.05rem; border-left: 4px solid var(--accent);
         }
+        .content-display div, .content-display span, .preview-expanded div, .preview-expanded span { font-family: var(--font-mono); }
 
         #logs {
             position: fixed; bottom: 20px; left: 20px;
@@ -354,7 +428,25 @@
                     </div>
                     <div id="note-content-field" style="margin-bottom: 20px;">
                         <label style="display: block; font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); margin-bottom: 8px;">INTELLIGENCE_PAYLOAD</label>
-                        <textarea id="note-content" style="height: 300px;" placeholder="Input operational data..."></textarea>
+                        <div class="editor-toolbar">
+                            <button type="button" onclick="formatDoc('bold')">B</button>
+                            <button type="button" onclick="formatDoc('italic')">I</button>
+                            <select onchange="formatDoc('forecolor', this.value); this.value=''">
+                                <option value="">COLOR</option>
+                                <option value="#33cccc">TEAL</option>
+                                <option value="#ff5555">RED</option>
+                                <option value="#00ffaa">GREEN</option>
+                                <option value="#ffffff">WHITE</option>
+                            </select>
+                            <select onchange="formatDoc('fontsize', this.value); this.value=''">
+                                <option value="">SIZE</option>
+                                <option value="2">SMALL</option>
+                                <option value="3">NORMAL</option>
+                                <option value="5">LARGE</option>
+                                <option value="7">HUGE</option>
+                            </select>
+                        </div>
+                        <div id="note-rich-content" class="rich-editor" contenteditable="true"></div>
                     </div>
                     <div style="margin-bottom: 30px;">
                         <label style="display: block; font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); margin-bottom: 8px;">TAGS (CLASSIFICATION_GROUP)</label>
@@ -459,6 +551,11 @@
         let currentViewingId = null;
         let draggedId = null;
 
+        // Rich Editor Function
+        window.formatDoc = (cmd, val) => {
+            document.execCommand(cmd, false, val);
+        };
+
         // Background Animation Lines
         const bg = document.getElementById('stream-bg');
         for(let i=0; i<35; i++) {
@@ -562,20 +659,40 @@
             const grid = document.getElementById('notes-grid');
             grid.innerHTML = '';
 
-            let filtered = allItems.filter(item => {
-                const matchSearch = item.title.toLowerCase().includes(search) || (item.content || '').toLowerCase().includes(search);
-                const matchTag = !activeTagFilter || (item.tags && item.tags.includes(activeTagFilter));
-                return matchSearch && matchTag;
+            // Recursive search: If a child matches, its parent should be included.
+            const matchedIds = new Set();
+            allItems.forEach(item => {
+                const titleMatch = item.title.toLowerCase().includes(search);
+                const contentMatch = (item.content || '').toLowerCase().includes(search);
+                const tagMatch = !activeTagFilter || (item.tags && item.tags.includes(activeTagFilter));
+                
+                if ((titleMatch || contentMatch) && tagMatch) {
+                    matchedIds.add(item.id);
+                    // Add all ancestors to matchedIds to ensure the tree path is visible
+                    let current = item;
+                    while (current.parentId) {
+                        matchedIds.add(current.parentId);
+                        current = allItems.find(i => i.id === current.parentId);
+                        if (!current) break;
+                    }
+                }
             });
 
-            const rootItems = filtered.filter(i => !i.parentId);
-            rootItems.forEach(item => grid.appendChild(createItemElement(item, filtered)));
+            // If search is empty and no tag filter, show all root items
+            let itemsToRender;
+            if (!search && !activeTagFilter) {
+                itemsToRender = allItems;
+            } else {
+                itemsToRender = allItems.filter(i => matchedIds.has(i.id));
+            }
+
+            const rootItems = itemsToRender.filter(i => !i.parentId);
+            rootItems.forEach(item => grid.appendChild(createItemElement(item, itemsToRender)));
         }
 
         function createItemElement(item, allFiltered) {
             const div = document.createElement('div');
             
-            // Proportional asymmetry
             const complexity = (item.title.length + (item.content?.length || 0));
             let spanClass = '';
             if (item.type === 'group' || complexity > 250) spanClass = 'span-big';
@@ -587,14 +704,22 @@
             
             const tagsHtml = (item.tags || []).map(t => `<span class="tag-pill" style="padding:1px 6px; font-size:0.55rem; margin-right:4px;">${t}</span>`).join('');
             
+            // Limit preview content for card preview
+            const plainTextPreview = (item.content || '').replace(/<[^>]*>?/gm, '').slice(0, 180);
+
             div.innerHTML = `
+                <div class="scanning-indicator"></div>
+                <div class="scanning-text">SCANNING...</div>
                 <div class="window-header">
                     <span>${item.type.toUpperCase()}_NODE: ${item.id.slice(0,8).toUpperCase()}</span>
                     <span>:::</span>
                 </div>
                 <div class="window-body">
                     <h3>${item.title}</h3>
-                    <p>${item.type === 'group' ? '[ CLASSIFIED_SECTOR ]' : (item.content || '').slice(0, 180) + '...'}</p>
+                    <p>${item.type === 'group' ? '[ CLASSIFIED_SECTOR ]' : plainTextPreview + '...'}</p>
+                    <div class="preview-expanded">
+                        ${item.type === 'note' ? item.content : '[ SECTOR_FILE_DIRECTORY_LOCKED ]'}
+                    </div>
                     <div style="margin-top:15px;">${tagsHtml}</div>
                 </div>
                 ${item.type === 'group' ? `<div class="nested-container" data-parent-id="${item.id}"></div>` : ''}
@@ -656,7 +781,12 @@
         document.getElementById('btn-add').addEventListener('click', () => { resetForm(); document.getElementById('note-type').value = 'note'; show('edit-modal'); });
         document.getElementById('btn-add-group').addEventListener('click', () => { resetForm(); document.getElementById('note-type').value = 'group'; document.getElementById('note-content-field').style.display = 'none'; show('edit-modal'); });
 
-        function resetForm() { document.getElementById('note-form').reset(); document.getElementById('note-id').value = ''; document.getElementById('note-content-field').style.display = 'block'; }
+        function resetForm() { 
+            document.getElementById('note-form').reset(); 
+            document.getElementById('note-id').value = ''; 
+            document.getElementById('note-rich-content').innerHTML = '';
+            document.getElementById('note-content-field').style.display = 'block'; 
+        }
 
         document.getElementById('note-form').addEventListener('submit', async e => {
             e.preventDefault();
@@ -667,7 +797,7 @@
             const payload = {
                 title: document.getElementById('note-title').value,
                 type: type,
-                content: type === 'note' ? document.getElementById('note-content').value : '',
+                content: type === 'note' ? document.getElementById('note-rich-content').innerHTML : '',
                 tags: tags,
                 updatedAt: Date.now(),
                 order: id ? allItems.find(i => i.id === id).order : Date.now()
@@ -687,7 +817,7 @@
             if (!item) return;
             currentViewingId = id;
             document.getElementById('view-title').innerText = item.title;
-            document.getElementById('view-content').innerText = item.type === 'note' ? item.content : '[ SECTOR_FILE_DIRECTORY_LOCKED ]';
+            document.getElementById('view-content').innerHTML = item.type === 'note' ? item.content : '[ SECTOR_FILE_DIRECTORY_LOCKED ]';
             document.getElementById('view-author').innerText = `NODE_CLASS: ${item.type.toUpperCase()}`;
             document.getElementById('view-date').innerText = `LAST_SYNC: ${new Date(item.updatedAt).toLocaleString()}`;
             document.getElementById('view-id-display').innerText = id.toUpperCase();
@@ -700,7 +830,7 @@
             document.getElementById('note-id').value = item.id;
             document.getElementById('note-type').value = item.type;
             document.getElementById('note-title').value = item.title;
-            document.getElementById('note-content').value = item.content || '';
+            document.getElementById('note-rich-content').innerHTML = item.content || '';
             document.getElementById('note-tags').value = (item.tags || []).join(', ');
             document.getElementById('note-content-field').style.display = item.type === 'group' ? 'none' : 'block';
             hide('view-modal'); show('edit-modal');
