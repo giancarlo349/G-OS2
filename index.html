@@ -377,7 +377,7 @@
     <div id="app">
         <div class="system-bar">
             <div>EVA-G.V1 // MAGI_SYSTEM_CORE</div>
-            <div id="status-display">SYNC: <span style="color: #00ffaa;">41.3%</span> // ENV: <span id="active-env-display" style="color:white">GEOFRONT</span> // NODES: <span id="node-count">0</span></div>
+            <div id="status-display">SYNC: <span style="color: #00ffaa;">41.3%</span> // ENV: <span id="active-env-display" style="color:white">MAGI_CORE_HELIOS</span> // NODES: <span id="node-count">0</span></div>
             <div id="clock">00:00:00</div>
         </div>
 
@@ -576,7 +576,11 @@
         let activeTagFilter = null;
         let currentViewingId = null;
         let draggedId = null;
-        let activeEnvironment = localStorage.getItem('eva_env') || 'GEOFRONT';
+        let activeEnvironment = localStorage.getItem('eva_env') || 'MAGI_CORE_HELIOS';
+        
+        // Listeners references for cleanup
+        let unsubscribeItems = null;
+        let unsubscribeTags = null;
 
         // Rich Editor
         window.formatDoc = (cmd, val) => {
@@ -661,8 +665,13 @@
 
         function initData() {
             if (!currentUser) return;
+            
+            // CRITICAL BUG FIX: Unsubscribe from old environment listeners before starting new ones
+            if (unsubscribeItems) unsubscribeItems();
+            if (unsubscribeTags) unsubscribeTags();
+
             const itemRef = ref(db, `items/${currentUser.uid}/${activeEnvironment}`);
-            onValue(itemRef, (snapshot) => {
+            unsubscribeItems = onValue(itemRef, (snapshot) => {
                 const data = snapshot.val();
                 allItems = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
                 allItems.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -671,7 +680,7 @@
             });
 
             const tagRef = ref(db, `tags/${currentUser.uid}/${activeEnvironment}`);
-            onValue(tagRef, (snapshot) => {
+            unsubscribeTags = onValue(tagRef, (snapshot) => {
                 const data = snapshot.val();
                 allTags = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
                 renderTagsBar();
@@ -927,7 +936,6 @@
                 if (cmd === 'create' && arg) {
                     const targetEnv = arg.toLowerCase();
                     sysLog(`CMD_CREATE: INITIALIZING_${targetEnv.toUpperCase()}_PROTOCOL...`);
-                    // Just creates an entry by pushing a system dummy node if it doesn't exist
                     const envRef = ref(db, `items/${currentUser.uid}/${targetEnv}`);
                     const snap = await get(envRef);
                     if (!snap.exists()) {
@@ -946,10 +954,8 @@
                 } else if (cmd === 'transfer' && arg) {
                     const targetEnv = arg.toLowerCase();
                     sysLog(`CMD_TRANSFER: ATTEMPTING_NEURAL_LINK_${targetEnv.toUpperCase()}...`);
-                    
                     const envRef = ref(db, `items/${currentUser.uid}/${targetEnv}`);
                     const snapshot = await get(envRef);
-                    
                     if (snapshot.exists()) {
                         activeEnvironment = targetEnv;
                         localStorage.setItem('eva_env', activeEnvironment);
@@ -966,8 +972,12 @@
                         const snapshot = await get(userRef);
                         const val = snapshot.val();
                         if (val) {
-                            const envs = Object.keys(val).map(e => e.toUpperCase()).join(', ');
-                            sysLog(`ENV_REGISTRY: ${envs}`);
+                            const envs = Object.keys(val).filter(key => {
+                                return val[key] !== null && typeof val[key] === 'object';
+                            }).map(e => e.toUpperCase()).join(', ');
+                            
+                            if (envs) sysLog(`ENV_REGISTRY: ${envs}`);
+                            else sysLog("ENV_REGISTRY: NO_ACTIVE_ENVIRONMENTS_FOUND");
                         } else {
                             sysLog("ENV_REGISTRY: NO_ADDITIONAL_ENVIRONMENTS_FOUND");
                         }
@@ -976,16 +986,20 @@
                     }
                 } else if (cmd === 'delete' && arg && arg2) {
                     if (arg2 === 'eva01') {
-                        sysLog(`CMD_PURGE_ENV: ${arg.toUpperCase()}`);
-                        await remove(ref(db, `items/${currentUser.uid}/${arg.toLowerCase()}`));
-                        await remove(ref(db, `tags/${currentUser.uid}/${arg.toLowerCase()}`));
-                        if (activeEnvironment === arg.toLowerCase()) {
-                            activeEnvironment = 'GEOFRONT';
+                        const targetEnv = arg.toLowerCase();
+                        sysLog(`CMD_PURGE_ENV: ${targetEnv.toUpperCase()}`);
+                        
+                        await remove(ref(db, `items/${currentUser.uid}/${targetEnv}`));
+                        await remove(ref(db, `tags/${currentUser.uid}/${targetEnv}`));
+                        
+                        if (activeEnvironment === targetEnv) {
+                            activeEnvironment = 'MAGI_CORE_HELIOS';
                             localStorage.setItem('eva_env', activeEnvironment);
                             updateEnvUI();
                             initData();
+                            sysLog("WARNING: ACTIVE_ENV_PURGED. REDIRECTING_TO_MAGI_CORE_HELIOS.");
                         }
-                        sysLog(`ENV_EXPUNGED: ${arg.toUpperCase()}`);
+                        sysLog(`ENV_EXPUNGED: ${targetEnv.toUpperCase()} REMOVED_FROM_MAGI`);
                     } else {
                         sysLog("ERR: INVALID_OVERRIDE_KEY. USE 'eva01'.");
                         sysLog("USAGE: delete [env_name] eva01");
